@@ -29,6 +29,7 @@ namespace stats
 {
 
 enum OperationId { UserId=0, MinId, MaxId, AverageId, MedianId, CountId, SumId, LastValueId };
+enum UpdateMode { Time, Auto, Manual };
 
 class VMF_EXPORT IOperation
 {
@@ -37,7 +38,7 @@ protected:
     virtual ~IOperation() {};
 public:
     virtual int getId() const = 0;
-//    virtual void apply() = 0; // temp stub, will be revealed later
+//    virtual void apply() = 0; // TODO temp stub, will be revealed later
     static std::shared_ptr<IOperation> create( int id, const std::string& name = "" );
 };
 
@@ -104,14 +105,29 @@ public:
     virtual int getId() const { return LastValueId; };
 };
 
+// TODO perhaps it could be possible to set up and use Metadata object instead of StatsSet
+typedef std::pair<std::string, vmf::Variant> Value; // name,value
+typedef std::vector<Value> StatsSet;
+
 class VMF_EXPORT Config
 {
 public:
     Config() {}
     virtual ~Config() {}
     Config( const Config& other ) { *this = other; }
+    void addStats( const std::string& statsName, const std::string& metadataName,
+		   const std::string& fieldName, std::shared_ptr<IOperation>& operation );
+    void setUpdateMode( UpdateMode mode );
+    void setUpdateTime( unsigned ms ); // which units?
 private:
 };
+
+// TODO perhaps it would be better to use functor instead of (*) function, but it leads to use templated methods
+typedef void (*UpdateHandler)( const std::string& schemaName, StatsSet& stats );
+
+// TODO perhaps it should be moved to corresponding classes (e.g. MetadataSchema)
+void getStats( const std::string& schemaName, StatsSet& stats ); // for manual get stats
+UpdateHandler registerHandler( UpdateHandler newHandler ); // for auto/time get stats
 
 } // namespace vmf::stats
 } // namespace vmf
