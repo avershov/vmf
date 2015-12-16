@@ -21,7 +21,8 @@
 namespace vmf
 {
 Metadata::Metadata( const std::shared_ptr< MetadataDesc >& spDescription )
-    : m_Id( INVALID_ID )
+    : std::vector< vmf::FieldValue >()
+    , m_Id( INVALID_ID )
     , m_nFrameIndex(UNDEFINED_FRAME_INDEX)
     , m_nNumOfFrames(UNDEFINED_FRAMES_NUMBER)
     , m_nTimestamp(UNDEFINED_TIMESTAMP)
@@ -41,7 +42,8 @@ Metadata::Metadata( const std::shared_ptr< MetadataDesc >& spDescription )
 }
 
 Metadata::Metadata( const Metadata& oMetadata )
-    : m_Id(oMetadata.m_Id)
+    : std::vector< vmf::FieldValue >(oMetadata)
+    , m_Id(oMetadata.m_Id)
     , m_nFrameIndex(oMetadata.m_nFrameIndex)
     , m_nNumOfFrames(oMetadata.m_nNumOfFrames)
     , m_nTimestamp(oMetadata.m_nTimestamp)
