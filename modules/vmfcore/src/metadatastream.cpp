@@ -311,6 +311,8 @@ void MetadataStream::internalAdd(const std::shared_ptr<Metadata>& spMetadata)
         }
     });
     m_oMetadataSet.push_back(spMetadata);
+    // notify schema & update stats
+    getSchema(spMetadata->getSchemaName())->metadataAdded(spMetadata);
 }
 
 bool MetadataStream::remove( const IdType& id )
@@ -326,6 +328,9 @@ bool MetadataStream::remove( const IdType& id )
     // Found it, let's remove it
     if( it != m_oMetadataSet.end() )
     {
+        // notify schema & update stats
+        getSchema(spMetadata->getSchemaName())->metadataAdded(spMetadata);
+
         (*it)->setStreamRef(nullptr);
         m_oMetadataSet.erase( it );
 

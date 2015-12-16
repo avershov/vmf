@@ -32,6 +32,7 @@
 #include <memory>
 
 #include "metadatadesc.hpp"
+#include "metadata.hpp"
 
 namespace vmf
 {
@@ -109,6 +110,9 @@ public:
     * \return pointer to metadata description object
     */
     static std::shared_ptr< MetadataSchema > getStdSchema(StdSchemaKind kind = STD_DST);
+
+    void metadataAdded( const std::shared_ptr< Metadata >& spMetadata );
+    void metadataRemoved( const std::shared_ptr< Metadata >& spMetadata );
 
 protected:
     bool load( const std::string& sSchemaFilePath );

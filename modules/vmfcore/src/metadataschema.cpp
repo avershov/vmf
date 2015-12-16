@@ -88,4 +88,16 @@ std::vector<std::shared_ptr< MetadataDesc >> MetadataSchema::getAll() const
     return set;
 }
 
+void MetadataSchema::metadataAdded( const std::shared_ptr< Metadata >& spMetadata )
+{
+    auto desc = spMetadata->getDesc();
+    // for each field in 'desc' which is registered for stats, update its stats
+}
+
+void MetadataSchema::metadataRemoved( const std::shared_ptr< Metadata >& spMetadata )
+{
+    auto desc = spMetadata->getDesc();
+    // for each field in 'desc' which is registered for stats, update its stats
+}
+
 } // namespace vmf
