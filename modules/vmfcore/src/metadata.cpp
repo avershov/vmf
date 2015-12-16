@@ -41,10 +41,19 @@ Metadata::Metadata( const std::shared_ptr< MetadataDesc >& spDescription )
 }
 
 Metadata::Metadata( const Metadata& oMetadata )
+    : m_Id(oMetadata.m_Id)
+    , m_nFrameIndex(oMetadata.m_nFrameIndex)
+    , m_nNumOfFrames(oMetadata.m_nNumOfFrames)
+    , m_nTimestamp(oMetadata.m_nTimestamp)
+    , m_nDuration(oMetadata.m_nDuration)
+    , m_sName(oMetadata.m_sName)
+    , m_sSchemaName(oMetadata.m_sSchemaName)
+    , m_vReferences(oMetadata.m_vReferences)
+    , m_spDesc(oMetadata.m_spDesc)
+    , m_pStream(nullptr)
 {
-    // Use default implementation of operator =.
-    *this = oMetadata;
-    m_pStream = nullptr;
+//    // Use default implementation of operator =.
+//    *this = oMetadata;
 }
 
 Metadata::~Metadata(void)

@@ -73,6 +73,8 @@ public:
     */
     virtual ~Metadata(void);
 
+    Metadata& operator = ( const Metadata& oMetadata ) = delete;
+
     /*!
     * \brief Get metadata item identifier
     * \return metadata numeric identifier

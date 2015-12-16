@@ -328,10 +328,12 @@ bool MetadataStream::remove( const IdType& id )
     // Found it, let's remove it
     if( it != m_oMetadataSet.end() )
     {
+        std::shared_ptr< Metadata > spMetadata = *it;
+
         // notify schema & update stats
         getSchema(spMetadata->getSchemaName())->metadataAdded(spMetadata);
 
-        (*it)->setStreamRef(nullptr);
+        spMetadata->setStreamRef(nullptr);
         m_oMetadataSet.erase( it );
 
         // Also remove any reference to it. There might be other shared pointers pointing to this object, so that
