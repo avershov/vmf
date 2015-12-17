@@ -453,10 +453,14 @@ void Metadata::addValue( const vmf::Variant& value )
     }
 
     this->emplace_back( FieldValue( "", value ) );
+
+    // we don't update stats here since emplace created new item - this is an initial record fill
 }
 
 void Metadata::setFieldValue( const std::string& sFieldName, const vmf::Variant& value )
 {
+    bool valueChanged = false;
+
     // Check field against description
     if( m_spDesc == nullptr )
     {
@@ -476,7 +480,12 @@ void Metadata::setFieldValue( const std::string& sFieldName, const vmf::Variant&
     {
         if( it != this->end() )
         {
-            *it = vmf::FieldValue( sFieldName, value );
+            auto newValue = vmf::FieldValue( sFieldName, value );
+            if( !(*it == newValue) )
+            {
+                *it = newValue;
+                valueChanged = true;
+            }
         }
         else
         {
@@ -492,12 +501,23 @@ void Metadata::setFieldValue( const std::string& sFieldName, const vmf::Variant&
 
         if( it != this->end() )
         {
-            *it = vmf::FieldValue( sFieldName, varNew );
+            auto newValue = vmf::FieldValue( sFieldName, varNew );
+            if( !(*it == newValue) )
+            {
+                *it = newValue;
+                valueChanged = true;
+            }
         }
         else
         {
             this->emplace_back( FieldValue( sFieldName, varNew ) );
         }
+    }
+
+    // notify schema & update stats
+    if( valueChanged && (m_pStream != nullptr) && (m_Id != INVALID_ID) )
+    {
+        m_pStream->metadataChanged( m_Id, sFieldName );
     }
 }
 

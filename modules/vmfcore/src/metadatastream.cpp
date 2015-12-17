@@ -311,8 +311,9 @@ void MetadataStream::internalAdd(const std::shared_ptr<Metadata>& spMetadata)
         }
     });
     m_oMetadataSet.push_back(spMetadata);
+
     // notify schema & update stats
-    getSchema(spMetadata->getSchemaName())->metadataAdded(spMetadata);
+    metadataAdded( spMetadata->getId() );
 }
 
 bool MetadataStream::remove( const IdType& id )
@@ -331,7 +332,7 @@ bool MetadataStream::remove( const IdType& id )
         std::shared_ptr< Metadata > spMetadata = *it;
 
         // notify schema & update stats
-        getSchema(spMetadata->getSchemaName())->metadataAdded(spMetadata);
+        metadataRemoved( id );
 
         spMetadata->setStreamRef(nullptr);
         m_oMetadataSet.erase( it );
@@ -838,6 +839,27 @@ void MetadataStream::convertFrameIndexToTimestamp(
     }
     if (i == videoSegments.size())
         timestamp = Metadata::UNDEFINED_TIMESTAMP, duration = Metadata::UNDEFINED_DURATION;
+}
+
+void MetadataStream::metadataAdded( const IdType& id ) const
+{
+    auto spMetadata = getById( id );
+    auto desc = spMetadata->getDesc();
+    // for each field in 'desc' which is registered for stats, update its stats
+}
+
+void MetadataStream::metadataRemoved( const IdType& id ) const
+{
+    auto spMetadata = getById( id );
+    auto desc = spMetadata->getDesc();
+    // for each field in 'desc' which is registered for stats, update its stats
+}
+
+void MetadataStream::metadataChanged( const IdType& id, const std::string& sFieldName ) const
+{
+    auto spMetadata = getById( id );
+    auto desc = spMetadata->getDesc();
+    // check if this field in 'desc' is registered for stats, and update its stats if so; do nothing if not
 }
 
 }//namespace vmf

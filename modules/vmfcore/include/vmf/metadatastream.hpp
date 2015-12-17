@@ -337,6 +337,10 @@ public:
         long long frameIndex, long long numOfFrames,
         long long& timestamp, long long& duration );
 
+    void metadataAdded( const IdType& id ) const;
+    void metadataRemoved( const IdType& id ) const;
+    void metadataChanged( const IdType& id, const std::string& sFieldName ) const;
+
 protected:
     void dataSourceCheck();
     std::shared_ptr<Metadata> import( MetadataStream& srcStream, std::shared_ptr< Metadata >& spMetadata, std::map< IdType, IdType >& mapIds, 
