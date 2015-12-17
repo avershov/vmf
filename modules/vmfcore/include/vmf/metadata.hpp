@@ -78,7 +78,7 @@ public:
     * \brief Assign operator
     * \param oMetadata [in] object to assign
     * \return assigned metadata object
-    * \details Operator explicitly deleted to garantee that Metadata objects
+    * \details Operator explicitly deleted to guarantee that Metadata objects
     * can't be assigned in user code, which is an invalid operation for objects
     * which have assigned Id
     */

@@ -54,8 +54,7 @@ Metadata::Metadata( const Metadata& oMetadata )
     , m_spDesc(oMetadata.m_spDesc)
     , m_pStream(nullptr)
 {
-//    // Use default implementation of operator =.
-//    *this = oMetadata;
+// we couldn't use *this assignment, since operator=() has been deleted
 }
 
 Metadata::~Metadata(void)

@@ -24,9 +24,10 @@ MetadataInternal::MetadataInternal( const std::shared_ptr< MetadataDesc >& spDes
 {}
 
 MetadataInternal::MetadataInternal( const MetadataInternal& that )
-    : Metadata(that), vRefs(that.vRefs)
+    : Metadata(that)
+    , vRefs(that.vRefs)
 {
-//    *this = that;
+// we couldn't use *this assignment, since operator=() has been deleted
 }
 
 MetadataInternal::MetadataInternal( const Metadata& base )
