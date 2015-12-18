@@ -843,8 +843,11 @@ void MetadataStream::convertFrameIndexToTimestamp(
 
 void MetadataStream::metadataAdded( const IdType& id ) const
 {
-    auto spMetadata = getById( id );
-    auto desc = spMetadata->getDesc();
+    auto spMetadata = getById( id );   // std::shared_ptr< Metadata >
+    auto desc = spMetadata->getDesc(); // std::shared_ptr< MetadataDesc >
+    auto schemaName = desc->getSchemaName(); // std::string
+    auto cit = m_config.find( schemaName ); // std::map< std::string, std::shared_ptr< MetadataStatsConfig >>::const_iterator
+    auto sit = m_stats.find( schemaName ); // std::map< std::string, std::shared_ptr< MetadataStats >>::const_iterator
     // for each field in 'desc' which is registered for stats, update its stats
 }
 

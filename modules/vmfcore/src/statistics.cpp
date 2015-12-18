@@ -26,15 +26,13 @@
 
 namespace vmf
 {
-namespace stats
-{
 
 std::shared_ptr<IOperation> IOperation::create( int id, const std::string& name )
 {
     switch( id )
     {
     case UserId:
-	throw std::runtime_error( "[INTERNAL] vmf::stats::IOperation::create() : User operation currently not supported" );
+	throw std::runtime_error( "[INTERNAL] vmf::IOperation::create() : User operation currently not supported" );
     case MinId:
 	return std::make_shared<MinOp>();
     case MaxId:
@@ -50,9 +48,8 @@ std::shared_ptr<IOperation> IOperation::create( int id, const std::string& name 
     case LastValueId:
 	return std::make_shared<LastValueOp>();
     default:
-	throw std::runtime_error( "[FATAL] vmf::stats::IOperation::create() : Undefined operation Id specified: " + std::to_string( id ));
+	throw std::runtime_error( "[FATAL] vmf::IOperation::create() : Undefined operation Id specified: " + std::to_string( id ));
     }
 }
 
-} // namespace vmf::stats
 } // namespace vmf

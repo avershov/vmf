@@ -20,16 +20,12 @@
 
 #include "variant.hpp"
 #include "global.hpp"
+#include "fieldvalue.hpp"
 #include <memory>
 #include <string>
 
 namespace vmf
 {
-namespace stats
-{
-
-enum OperationId { UserId=0, MinId, MaxId, AverageId, MedianId, CountId, SumId, LastValueId };
-enum UpdateMode { Time, Auto, Manual };
 
 class VMF_EXPORT IOperation
 {
@@ -37,7 +33,12 @@ protected:
     IOperation() {};
     virtual ~IOperation() {};
 public:
+    enum OperationId { UserId=0, MinId, MaxId, AverageId, MedianId, CountId, SumId, LastValueId };
+    enum OperationFlags { Add=0x01, Remove=0x02, Change=0x04, All=(Add|Remove|Change) };
+    enum UpdateMode { Time, Auto, Manual };
+public:
     virtual int getId() const = 0;
+    virtual bool canFast( unsigned flags ) const = 0;
 //    virtual void apply() = 0; // TODO temp stub, will be revealed later
     static std::shared_ptr<IOperation> create( int id, const std::string& name = "" );
 };
@@ -49,6 +50,7 @@ public:
     virtual ~MinOp() {};
 public:
     virtual int getId() const { return MinId; };
+    virtual bool canFast( unsigned flags ) const { return bool((flags & Add) != 0); };
 };
 
 class VMF_EXPORT MaxOp: public IOperation
@@ -58,6 +60,7 @@ public:
     virtual ~MaxOp() {};
 public:
     virtual int getId() const { return MaxId; };
+    virtual bool canFast( unsigned flags ) const { return bool((flags & Add) != 0); };
 };
 
 class VMF_EXPORT AverageOp: public IOperation
@@ -67,6 +70,7 @@ public:
     virtual ~AverageOp() {};
 public:
     virtual int getId() const { return AverageId; };
+    virtual bool canFast( unsigned flags ) const { return bool((flags & All) != 0); };
 };
 
 class VMF_EXPORT MedianOp: public IOperation
@@ -76,6 +80,7 @@ public:
     virtual ~MedianOp() {};
 public:
     virtual int getId() const { return MedianId; };
+    virtual bool canFast( unsigned flags ) const { return false; };
 };
 
 class VMF_EXPORT CountOp: public IOperation
@@ -85,6 +90,7 @@ public:
     virtual ~CountOp() {};
 public:
     virtual int getId() const { return CountId; };
+    virtual bool canFast( unsigned flags ) const { return bool((flags & All) != 0); };
 };
 
 class VMF_EXPORT SumOp: public IOperation
@@ -94,6 +100,7 @@ public:
     virtual ~SumOp() {};
 public:
     virtual int getId() const { return SumId; };
+    virtual bool canFast( unsigned flags ) const { return bool((flags & All) != 0); };
 };
 
 class VMF_EXPORT LastValueOp: public IOperation
@@ -103,33 +110,55 @@ public:
     virtual ~LastValueOp() {};
 public:
     virtual int getId() const { return LastValueId; };
+    virtual bool canFast( unsigned flags ) const { return bool((flags & Add) != 0); };
 };
 
-// TODO perhaps it could be possible to set up and use Metadata object instead of StatsSet
-typedef std::pair<std::string, vmf::Variant> Value; // name,value
-typedef std::vector<Value> StatsSet;
+//// TODO perhaps it could be possible to set up and use Metadata object instead of StatsSet
+//typedef std::pair<std::string, vmf::Variant> Value; // name,value
+//typedef std::vector<Value> StatsSet;
 
-class VMF_EXPORT Config
+struct MetadataStatsConfigItem
+{
+    std::string statsName;
+    std::string metadataName;
+    std::string fieldName;
+    std::shared_ptr<IOperation> operation;
+};
+
+class VMF_EXPORT MetadataStatsConfig: public std::vector< MetadataStatsConfigItem >
 {
 public:
-    Config() {}
-    virtual ~Config() {}
-    Config( const Config& other ) { *this = other; }
+    MetadataStatsConfig() {};
+    virtual ~MetadataStatsConfig() {};
+
     void addStats( const std::string& statsName, const std::string& metadataName,
 		   const std::string& fieldName, std::shared_ptr<IOperation>& operation );
-    void setUpdateMode( UpdateMode mode );
-    void setUpdateTime( unsigned ms ); // which units?
+//    void setUpdateMode( UpdateMode mode );
+//    void setUpdateTime( unsigned ms ); // which units?
 private:
 };
 
-// TODO perhaps it would be better to use functor instead of (*) function, but it leads to use templated methods
-typedef void (*UpdateHandler)( const std::string& schemaName, StatsSet& stats );
+struct MetadataStatsItem
+{
+    std::string statsName;
+    vmf::FieldValue statsValue;
+};
 
-// TODO perhaps it should be moved to corresponding classes (e.g. MetadataSchema)
-void getStats( const std::string& schemaName, StatsSet& stats ); // for manual get stats
-UpdateHandler registerHandler( UpdateHandler newHandler ); // for auto/time get stats
+class VMF_EXPORT MetadataStats: public std::vector< MetadataStatsItem >
+{
+public:
+    MetadataStats() {};
+    virtual ~MetadataStats() {};
+private:
+};
 
-} // namespace vmf::stats
+//// TODO perhaps it would be better to use functor instead of (*) function, but it leads to use templated methods
+//typedef void (*UpdateHandler)( const std::string& schemaName, StatsSet& stats );
+//
+//// TODO perhaps it should be moved to corresponding classes (e.g. MetadataSchema)
+//void getStats( const std::string& schemaName, StatsSet& stats ); // for manual get stats
+//UpdateHandler registerHandler( UpdateHandler newHandler ); // for auto/time get stats
+
 } // namespace vmf
 
 #endif /* __VMF_STATISTICS_H__ */

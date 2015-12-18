@@ -32,6 +32,7 @@
 #include "metadataset.hpp"
 #include "metadataschema.hpp"
 #include "iquery.hpp"
+#include "statistics.hpp"
 #include <map>
 #include <memory>
 #include <vector>
@@ -361,6 +362,9 @@ private:
     std::shared_ptr<IDataSource> dataSource;
     vmf::IdType nextId;
     std::string m_sChecksumMedia;
+
+    std::map< std::string, std::shared_ptr< MetadataStatsConfig >> m_config;
+    std::map< std::string, std::shared_ptr< MetadataStats >> m_stats;
 };
 
 }
