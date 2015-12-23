@@ -29,7 +29,7 @@ namespace vmf
 
 class VMF_EXPORT IOperation
 {
-protected:
+public:
     IOperation() {};
     virtual ~IOperation() {};
 public:
