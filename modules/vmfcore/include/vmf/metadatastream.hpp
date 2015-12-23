@@ -337,6 +337,15 @@ public:
         long long frameIndex, long long numOfFrames,
         long long& timestamp, long long& duration );
 
+    /*!
+    * \brief Functions used to notify stream about statistics-related events
+    * \param id [in] metadata id
+    * \param fieldName [in] name of changed field
+    */
+    void metadataAdded( const IdType& id ) const;
+    void metadataRemoved( const IdType& id ) const;
+    void metadataChanged( const IdType& id, const std::string& fieldName ) const;
+
 protected:
     void dataSourceCheck();
     std::shared_ptr<Metadata> import( MetadataStream& srcStream, std::shared_ptr< Metadata >& spMetadata, std::map< IdType, IdType >& mapIds, 

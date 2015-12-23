@@ -52,4 +52,16 @@ std::shared_ptr<IOperation> IOperation::create( int id, const std::string& name 
     }
 }
 
+void Statistics::metadataAdded( const std::shared_ptr< Metadata >& spMetadata )
+{
+}
+
+void Statistics::metadataRemoved( const std::shared_ptr< Metadata >& spMetadata )
+{
+}
+
+void Statistics::metadataChanged( const std::shared_ptr< Metadata >& spMetadata, const std::string& fieldName )
+{
+}
+
 } // namespace vmf

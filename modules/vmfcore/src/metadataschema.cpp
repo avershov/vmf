@@ -88,4 +88,14 @@ std::vector<std::shared_ptr< MetadataDesc >> MetadataSchema::getAll() const
     return set;
 }
 
+void MetadataSchema::setStatistics(std::shared_ptr<Statistics>& stats)
+{
+    m_stats = stats;
+}
+
+std::shared_ptr<Statistics> MetadataSchema::getStatistics() const
+{
+    return m_stats;
+}
+
 } // namespace vmf
