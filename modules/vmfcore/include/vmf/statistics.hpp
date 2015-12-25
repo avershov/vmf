@@ -20,18 +20,19 @@
 
 #include "variant.hpp"
 #include "global.hpp"
-#include "metadata.hpp"
 #include <memory>
 #include <string>
 
 namespace vmf
 {
+class Metadata;
+class MetadataStream;
 
 class VMF_EXPORT IOperation
 {
 public:
-    IOperation() {};
-    virtual ~IOperation() {};
+    IOperation();
+    virtual ~IOperation();
 public:
     enum OperationId { UserId=0, MinId, MaxId, AverageId, MedianId, CountId, SumId, LastValueId };
     enum OperationFlags { Add=0x01, Remove=0x02, Change=0x04, All=(Add|Remove|Change) };
@@ -39,19 +40,27 @@ public:
     static std::shared_ptr<IOperation> create( int id, const std::string& name = "" );
 public:
     virtual int getId() const = 0;
-    virtual bool canFast( unsigned flags ) const = 0;
+    virtual bool canInc( unsigned flags ) const = 0;
     virtual Variant getValue() const = 0;
+    virtual void initValue() = 0;
+    virtual void addValue( const Variant& in ) = 0;
+    virtual void removeValue( const Variant& in ) = 0;
+    virtual void changeValue( const Variant& in ) = 0;
 };
 
 class VMF_EXPORT MinOp: public IOperation
 {
 public:
-    MinOp(): IOperation() {};
-    virtual ~MinOp() {};
+    MinOp();
+    virtual ~MinOp();
 public:
-    virtual int getId() const { return MinId; };
-    virtual bool canFast( unsigned flags ) const { return bool((flags & Add) != 0); };
-    virtual Variant getValue() const { return value; };
+    virtual int getId() const;
+    virtual bool canInc( unsigned flags ) const;
+    virtual Variant getValue() const;
+    virtual void initValue();
+    virtual void addValue( const Variant& in );
+    virtual void removeValue( const Variant& in );
+    virtual void changeValue( const Variant& in );
 private:
     Variant value;
 };
@@ -59,12 +68,16 @@ private:
 class VMF_EXPORT MaxOp: public IOperation
 {
 public:
-    MaxOp(): IOperation() {};
-    virtual ~MaxOp() {};
+    MaxOp();
+    virtual ~MaxOp();
 public:
-    virtual int getId() const { return MaxId; };
-    virtual bool canFast( unsigned flags ) const { return bool((flags & Add) != 0); };
-    virtual Variant getValue() const { return value; };
+    virtual int getId() const;
+    virtual bool canInc( unsigned flags ) const;
+    virtual Variant getValue() const;
+    virtual void initValue();
+    virtual void addValue( const Variant& in );
+    virtual void removeValue( const Variant& in );
+    virtual void changeValue( const Variant& in );
 private:
     Variant value;
 };
@@ -72,12 +85,16 @@ private:
 class VMF_EXPORT AverageOp: public IOperation
 {
 public:
-    AverageOp(): IOperation() {};
-    virtual ~AverageOp() {};
+    AverageOp();
+    virtual ~AverageOp();
 public:
-    virtual int getId() const { return AverageId; };
-    virtual bool canFast( unsigned flags ) const { return bool((flags & All) != 0); };
-    virtual Variant getValue() const { return value; };
+    virtual int getId() const;
+    virtual bool canInc( unsigned flags ) const;
+    virtual Variant getValue() const;
+    virtual void initValue();
+    virtual void addValue( const Variant& in );
+    virtual void removeValue( const Variant& in );
+    virtual void changeValue( const Variant& in );
 private:
     Variant value;
 };
@@ -85,12 +102,16 @@ private:
 class VMF_EXPORT MedianOp: public IOperation
 {
 public:
-    MedianOp(): IOperation() {};
-    virtual ~MedianOp() {};
+    MedianOp();
+    virtual ~MedianOp();
 public:
-    virtual int getId() const { return MedianId; };
-    virtual bool canFast( unsigned flags ) const { return false; };
-    virtual Variant getValue() const { return value; };
+    virtual int getId() const;
+    virtual bool canInc( unsigned flags ) const;
+    virtual Variant getValue() const;
+    virtual void initValue();
+    virtual void addValue( const Variant& in );
+    virtual void removeValue( const Variant& in );
+    virtual void changeValue( const Variant& in );
 private:
     Variant value;
 };
@@ -98,12 +119,16 @@ private:
 class VMF_EXPORT CountOp: public IOperation
 {
 public:
-    CountOp(): IOperation() {};
-    virtual ~CountOp() {};
+    CountOp();
+    virtual ~CountOp();
 public:
-    virtual int getId() const { return CountId; };
-    virtual bool canFast( unsigned flags ) const { return bool((flags & All) != 0); };
-    virtual Variant getValue() const { return value; };
+    virtual int getId() const;
+    virtual bool canInc( unsigned flags ) const;
+    virtual Variant getValue() const;
+    virtual void initValue();
+    virtual void addValue( const Variant& in );
+    virtual void removeValue( const Variant& in );
+    virtual void changeValue( const Variant& in );
 private:
     Variant value;
 };
@@ -111,12 +136,16 @@ private:
 class VMF_EXPORT SumOp: public IOperation
 {
 public:
-    SumOp(): IOperation() {};
-    virtual ~SumOp() {};
+    SumOp();
+    virtual ~SumOp();
 public:
-    virtual int getId() const { return SumId; };
-    virtual bool canFast( unsigned flags ) const { return bool((flags & All) != 0); };
-    virtual Variant getValue() const { return value; };
+    virtual int getId() const;
+    virtual bool canInc( unsigned flags ) const;
+    virtual Variant getValue() const;
+    virtual void initValue();
+    virtual void addValue( const Variant& in );
+    virtual void removeValue( const Variant& in );
+    virtual void changeValue( const Variant& in );
 private:
     Variant value;
 };
@@ -124,12 +153,16 @@ private:
 class VMF_EXPORT LastValueOp: public IOperation
 {
 public:
-    LastValueOp(): IOperation() {};
-    virtual ~LastValueOp() {};
+    LastValueOp();
+    virtual ~LastValueOp();
 public:
-    virtual int getId() const { return LastValueId; };
-    virtual bool canFast( unsigned flags ) const { return bool((flags & Add) != 0); };
-    virtual Variant getValue() const { return value; };
+    virtual int getId() const;
+    virtual bool canInc( unsigned flags ) const;
+    virtual Variant getValue() const;
+    virtual void initValue();
+    virtual void addValue( const Variant& in );
+    virtual void removeValue( const Variant& in );
+    virtual void changeValue( const Variant& in );
 private:
     Variant value;
 };
@@ -137,9 +170,11 @@ private:
 struct StatisticsItem
 {
     std::string name;
+    std::string schema;
     std::string metadata;
     std::string field;
     std::shared_ptr<IOperation> operation;
+    bool dirty;
 };
 
 class VMF_EXPORT Statistics
@@ -147,8 +182,9 @@ class VMF_EXPORT Statistics
 public:
     enum UpdateMode { Time, Auto, Manual };
 public:
-    Statistics() {};
-    virtual ~Statistics() {};
+    Statistics();
+    virtual ~Statistics();
+
     void add( const std::string& name, const std::string& metadata, const std::string& field, std::shared_ptr<IOperation>& operation );
     void setUpdateMode( UpdateMode mode );
     void setUpdateTime( unsigned ms );
@@ -162,8 +198,13 @@ public:
     void metadataRemoved( const std::shared_ptr< Metadata >& spMetadata );
     void metadataChanged( const std::shared_ptr< Metadata >& spMetadata, const std::string& fieldName );
 
+    bool isDirty() const;
+    void rescan();
+
 private:
     std::vector<StatisticsItem> m_items;
+    const MetadataStream* m_pStream;
+    bool m_dirty;
 };
 
 } // namespace vmf
