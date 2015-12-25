@@ -251,7 +251,7 @@ void Statistics::rescan()
             for( int is = 0;  is < (int)m_items.size();  ++is )
             {
                 StatisticsItem& si = m_items[is];
-                if( (desc->getSchemaName() == si.schema) && (desc->getMetadataName() == si.metadata) )
+                if( si.dirty && (desc->getSchemaName() == si.schema) && (desc->getMetadataName() == si.metadata) )
                 {
                     FieldDesc fd;
                     Metadata::iterator fit = spMetadata->findField( si.field );
