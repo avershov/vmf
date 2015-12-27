@@ -103,10 +103,10 @@ CountOp::~CountOp() {}
 int CountOp::getId() const { return CountId; }
 bool CountOp::canInc( unsigned flags ) const { return bool((flags & All) != 0); }
 Variant CountOp::getValue() const { return value; }
-void CountOp::initValue() {}
-void CountOp::addValue( const Variant& in ) {}
-void CountOp::removeValue( const Variant& in ) {}
-void CountOp::changeValue( const Variant& in ) {}
+void CountOp::initValue() { value = Variant( vmf_integer( 0 )); }
+void CountOp::addValue( const Variant& /*in*/ ) { value = Variant( value.get_integer()+1 ); }
+void CountOp::removeValue( const Variant& /*in*/ ) { value = Variant( value.get_integer()-1 ); }
+void CountOp::changeValue( const Variant& /*in*/ ) { /* changing of metadata value doesn't change metadata count */ }
 
 SumOp::SumOp(): IOperation() {}
 SumOp::~SumOp() {}
@@ -321,7 +321,13 @@ void Statistics::validate()
         //       - validate std::string metadata
         //       - validate std::string field;
         //       - validate operation type against metadata/field value type
+        reset();
     }
+}
+
+std::vector<StatisticsItem> Statistics::getStatisticsItems() const
+{
+    return m_items;
 }
 
 } // namespace vmf

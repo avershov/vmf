@@ -884,7 +884,9 @@ void MetadataStream::setStatistics( std::shared_ptr<Statistics>& stats, const st
 {
     // TODO: on schema/stream add/remove/load events, set also these schema stats params accordingly
     stats->setMetadataStream( this );
-    stats->setSchemaName( sSchemaName );
+    const std::shared_ptr< MetadataSchema > schema = getSchema( sSchemaName );
+    if( schema != nullptr )
+        schema->setStatistics( stats );
 }
 
 }//namespace vmf

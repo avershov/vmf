@@ -186,6 +186,10 @@ private:
 
 struct StatisticsItem
 {
+    StatisticsItem( const std::string& n, const std::string& m, const std::string& f, std::shared_ptr<IOperation> op )
+        : name( n ), metadata( m ), field( f ), operation( op ), dirty( false ) {};
+    ~StatisticsItem() {};
+
     std::string name;
     std::string metadata;
     std::string field;
@@ -223,6 +227,7 @@ public:
     void reset();
 
     void addStatisticsItem( const StatisticsItem& item );
+    std::vector<StatisticsItem> getStatisticsItems() const;
 
 protected:
     void setSchemaName( std::string schema );
