@@ -346,6 +346,13 @@ public:
     void metadataRemoved( const IdType& id ) const;
     void metadataChanged( const IdType& id, const std::string& fieldName ) const;
 
+    /*!
+    * \brief Set statistics object for metadata schema
+    * \param stats [in] pointer to statistics object
+    * \param sSchemaName [in] schema name
+    */
+    void setStatistics( std::shared_ptr<Statistics>& stats, const std::string& sSchemaName );
+
 protected:
     void dataSourceCheck();
     std::shared_ptr<Metadata> import( MetadataStream& srcStream, std::shared_ptr< Metadata >& spMetadata, std::map< IdType, IdType >& mapIds, 

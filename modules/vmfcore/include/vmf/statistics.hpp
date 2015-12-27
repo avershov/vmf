@@ -33,11 +33,14 @@ class VMF_EXPORT IOperation
 public:
     IOperation();
     virtual ~IOperation();
+
 public:
     enum OperationId { UserId=0, MinId, MaxId, AverageId, MedianId, CountId, SumId, LastValueId };
     enum OperationFlags { Add=0x01, Remove=0x02, Change=0x04, All=(Add|Remove|Change) };
+
 public:
     static std::shared_ptr<IOperation> create( int id, const std::string& name = "" );
+
 public:
     virtual int getId() const = 0;
     virtual bool canInc( unsigned flags ) const = 0;
@@ -53,6 +56,7 @@ class VMF_EXPORT MinOp: public IOperation
 public:
     MinOp();
     virtual ~MinOp();
+
 public:
     virtual int getId() const;
     virtual bool canInc( unsigned flags ) const;
@@ -61,6 +65,7 @@ public:
     virtual void addValue( const Variant& in );
     virtual void removeValue( const Variant& in );
     virtual void changeValue( const Variant& in );
+
 private:
     Variant value;
 };
@@ -70,6 +75,7 @@ class VMF_EXPORT MaxOp: public IOperation
 public:
     MaxOp();
     virtual ~MaxOp();
+
 public:
     virtual int getId() const;
     virtual bool canInc( unsigned flags ) const;
@@ -78,6 +84,7 @@ public:
     virtual void addValue( const Variant& in );
     virtual void removeValue( const Variant& in );
     virtual void changeValue( const Variant& in );
+
 private:
     Variant value;
 };
@@ -87,6 +94,7 @@ class VMF_EXPORT AverageOp: public IOperation
 public:
     AverageOp();
     virtual ~AverageOp();
+
 public:
     virtual int getId() const;
     virtual bool canInc( unsigned flags ) const;
@@ -95,6 +103,7 @@ public:
     virtual void addValue( const Variant& in );
     virtual void removeValue( const Variant& in );
     virtual void changeValue( const Variant& in );
+
 private:
     Variant value;
 };
@@ -104,6 +113,7 @@ class VMF_EXPORT MedianOp: public IOperation
 public:
     MedianOp();
     virtual ~MedianOp();
+
 public:
     virtual int getId() const;
     virtual bool canInc( unsigned flags ) const;
@@ -112,6 +122,7 @@ public:
     virtual void addValue( const Variant& in );
     virtual void removeValue( const Variant& in );
     virtual void changeValue( const Variant& in );
+
 private:
     Variant value;
 };
@@ -121,6 +132,7 @@ class VMF_EXPORT CountOp: public IOperation
 public:
     CountOp();
     virtual ~CountOp();
+
 public:
     virtual int getId() const;
     virtual bool canInc( unsigned flags ) const;
@@ -129,6 +141,7 @@ public:
     virtual void addValue( const Variant& in );
     virtual void removeValue( const Variant& in );
     virtual void changeValue( const Variant& in );
+
 private:
     Variant value;
 };
@@ -138,6 +151,7 @@ class VMF_EXPORT SumOp: public IOperation
 public:
     SumOp();
     virtual ~SumOp();
+
 public:
     virtual int getId() const;
     virtual bool canInc( unsigned flags ) const;
@@ -146,6 +160,7 @@ public:
     virtual void addValue( const Variant& in );
     virtual void removeValue( const Variant& in );
     virtual void changeValue( const Variant& in );
+
 private:
     Variant value;
 };
@@ -155,6 +170,7 @@ class VMF_EXPORT LastValueOp: public IOperation
 public:
     LastValueOp();
     virtual ~LastValueOp();
+
 public:
     virtual int getId() const;
     virtual bool canInc( unsigned flags ) const;
@@ -163,6 +179,7 @@ public:
     virtual void addValue( const Variant& in );
     virtual void removeValue( const Variant& in );
     virtual void changeValue( const Variant& in );
+
 private:
     Variant value;
 };
@@ -170,7 +187,6 @@ private:
 struct StatisticsItem
 {
     std::string name;
-    std::string schema;
     std::string metadata;
     std::string field;
     std::shared_ptr<IOperation> operation;
@@ -179,8 +195,12 @@ struct StatisticsItem
 
 class VMF_EXPORT Statistics
 {
+    friend class MetadataSchema;
+    friend class MetadataStream;
+
 public:
     enum UpdateMode { Time, Auto, Manual };
+
 public:
     Statistics();
     virtual ~Statistics();
@@ -200,10 +220,20 @@ public:
 
     bool isDirty() const;
     void rescan();
+    void reset();
+
+    void addStatisticsItem( const StatisticsItem& item );
+
+protected:
+    void setSchemaName( std::string schema );
+    void setMetadataStream( const MetadataStream* pStream );
 
 private:
+    void validate();
+
     std::vector<StatisticsItem> m_items;
     const MetadataStream* m_pStream;
+    std::string m_schema;
     bool m_dirty;
 };
 

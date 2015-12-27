@@ -151,11 +151,10 @@ void Statistics::metadataAdded( const std::shared_ptr< Metadata >& spMetadata )
             {
                 // TODO: we can/must add also fd checks - e.g. value type
                 vmf::FieldValue& fv = *fit;
-                std::shared_ptr<IOperation> operation = si.operation;
 /*
-                if( operation->canInc( IOperation::Add ))
+                if( si.operation->canInc( IOperation::Add ))
                 {
-                    operation->addValue( fv );
+                    si.operation->addValue( fv );
                 }
                 else
                 {
@@ -164,7 +163,7 @@ void Statistics::metadataAdded( const std::shared_ptr< Metadata >& spMetadata )
                 }
 */
                 // TODO: we assume that all operations can add incrementally, check this at configuration stage
-                operation->addValue( fv );
+                si.operation->addValue( fv );
             }
         }
     }
@@ -184,10 +183,9 @@ void Statistics::metadataRemoved( const std::shared_ptr< Metadata >& spMetadata 
             {
                 // TODO: we can/must add also fd checks - e.g. value type
                 vmf::FieldValue& fv = *fit;
-                std::shared_ptr<IOperation> operation = si.operation;
-                if( operation->canInc( IOperation::Remove ))
+                if( si.operation->canInc( IOperation::Remove ))
                 {
-                    operation->removeValue( fv );
+                    si.operation->removeValue( fv );
                 }
                 else
                 {
@@ -213,10 +211,9 @@ void Statistics::metadataChanged( const std::shared_ptr< Metadata >& spMetadata,
             {
                 // TODO: we can/must add also fd checks - e.g. value type
                 vmf::FieldValue& fv = *fit;
-                std::shared_ptr<IOperation> operation = si.operation;
-                if( operation->canInc( IOperation::Change ))
+                if( si.operation->canInc( IOperation::Change ))
                 {
-                    operation->changeValue( fv );
+                    si.operation->changeValue( fv );
                 }
                 else
                 {
@@ -251,7 +248,7 @@ void Statistics::rescan()
             for( int is = 0;  is < (int)m_items.size();  ++is )
             {
                 StatisticsItem& si = m_items[is];
-                if( si.dirty && (desc->getSchemaName() == si.schema) && (desc->getMetadataName() == si.metadata) )
+                if( si.dirty && (desc->getSchemaName() == m_schema) && (desc->getMetadataName() == si.metadata) )
                 {
                     FieldDesc fd;
                     Metadata::iterator fit = spMetadata->findField( si.field );
@@ -259,9 +256,8 @@ void Statistics::rescan()
                     {
                         // TODO: we can/must add also fd checks - e.g. value type
                         vmf::FieldValue& fv = *fit;
-                        std::shared_ptr<IOperation> operation = si.operation;
                         // TODO: we assume that all operations can add incrementally, check this at configuration stage
-                        operation->addValue( fv );
+                        si.operation->addValue( fv );
                     }
                 }
             }
@@ -272,6 +268,59 @@ void Statistics::rescan()
             si.dirty = false;
         }
         m_dirty = false;
+    }
+}
+
+void Statistics::reset()
+{
+    for( int is = 0;  is < (int)m_items.size();  ++is )
+    {
+        StatisticsItem& si = m_items[is];
+        si.operation->initValue();
+        si.dirty = false;
+    }
+    m_dirty = false;
+}
+
+void Statistics::addStatisticsItem( const StatisticsItem& item )
+{
+    for( int is = 0;  is < (int)m_items.size();  ++is )
+    {
+        StatisticsItem& si = m_items[is];
+        if( si.name == item.name )
+        {
+            VMF_EXCEPTION(IncorrectParamException, "Duplicate statistics name for statistics object" );
+        }
+    }
+    m_items.push_back( item );
+    m_items.back().dirty = false;
+    validate();
+}
+
+void Statistics::setSchemaName( std::string schema )
+{
+    m_schema = schema;
+    validate();
+}
+
+void Statistics::setMetadataStream( const MetadataStream* pStream )
+{
+    m_pStream = pStream;
+    validate();
+}
+
+void Statistics::validate()
+{
+    if( (m_pStream != nullptr) && !m_schema.empty() )
+    {
+        if( m_pStream->getSchema( m_schema ) == nullptr )
+        {
+            VMF_EXCEPTION(IncorrectParamException, "Unknown schema for statistics object" );
+        }
+        // TODO: for m_items vector:
+        //       - validate std::string metadata
+        //       - validate std::string field;
+        //       - validate operation type against metadata/field value type
     }
 }
 

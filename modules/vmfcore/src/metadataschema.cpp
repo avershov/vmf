@@ -91,6 +91,7 @@ std::vector<std::shared_ptr< MetadataDesc >> MetadataSchema::getAll() const
 void MetadataSchema::setStatistics(std::shared_ptr<Statistics>& stats)
 {
     m_stats = stats;
+    m_stats->setSchemaName( m_sName );
 }
 
 std::shared_ptr<Statistics> MetadataSchema::getStatistics() const
