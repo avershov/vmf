@@ -184,7 +184,7 @@ private:
     Variant value;
 };
 
-struct StatisticsItem
+struct VMF_EXPORT StatisticsItem
 {
     StatisticsItem( const std::string& n, const std::string& m, const std::string& f, std::shared_ptr<IOperation> op )
         : name( n ), metadata( m ), field( f ), operation( op ), dirty( false ) {};
