@@ -30,7 +30,6 @@
 
 namespace vmf
 {
-class FieldValue;
 class Metadata;
 class MetadataDesc;
 class MetadataSchema;
@@ -50,18 +49,19 @@ public:
 
 public:
     enum Type { Min, Max, Average, Median, Count, Sum, LastValue, _UserBegin };
-    enum Mode { Add=0x01, Remove=0x02, Change=0x04, All=(Add|Remove|Change) };
+    enum Mode { Add=0x01, Remove=0x02, Change=0x04 };
 
 public:
     static std::shared_ptr< IStatisticsOperation > create( Type operationType, Variant::Type dataType );
-    static std::shared_ptr< IStatisticsOperation > validate( std::shared_ptr< IStatisticsOperation > operation, bool standard );
+    static void validate( std::shared_ptr< IStatisticsOperation > operation, bool isStandard );
 
 public:
     virtual std::string getName() const = 0;
+    virtual void setDataType( Variant::Type dataType) = 0;
     virtual bool canImmediate( Mode mode ) const = 0;
-    virtual void handleValue( Mode mode, const FieldValue& fieldValue ) const = 0;
     virtual void reset() = 0;
-    virtual FieldValue getValue() const = 0;
+    virtual void handleValue( Mode mode, const Variant& inputValue ) = 0;
+    virtual Variant getValue() const = 0;
 };
 
 /*!
@@ -105,7 +105,7 @@ public:
     std::shared_ptr< IStatisticsOperation > getOperation() const;
     bool isDirty() const;
     void setDirty( bool dirtyState );
-    FieldValue getValue() const;
+    Variant getValue() const;
 
 private:
     std::shared_ptr< StatisticsDesc > m_desc;

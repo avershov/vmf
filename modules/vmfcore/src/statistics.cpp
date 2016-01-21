@@ -30,123 +30,449 @@ namespace vmf
 
 // standard operation classes
 
+#define STD_OP_PREFIX "com.intel.statistics.std_operation."
+
 class MinOperation: public IStatisticsOperation
 {
 public:
-    MinOperation( unsigned dataType ) {};
+    MinOperation()
+        : m_dataType( Variant::type_unknown ) {};
     virtual ~MinOperation() {};
 
 public:
-    virtual std::string getName() const { return std::string("MinOperation"); };
-    virtual bool canImmediate( Mode mode ) const { return true; };
-    virtual void handleValue( Mode mode, const FieldValue& fieldValue ) const {};
-    virtual void reset() {};
-    virtual FieldValue getValue() const { return m_value; };
+    virtual std::string getName() const
+        { return std::string( STD_OP_PREFIX "Min" ); };
+    virtual void setDataType( Variant::Type dataType )
+        {
+            switch( dataType )
+            {
+            case Variant::type_integer:
+            case Variant::type_real:
+                m_dataType = dataType;
+                break;
+            case Variant::type_unknown:
+                VMF_EXCEPTION( InternalErrorException, "Operation doesn't accept 'unknown' data type!" );
+            default:
+                VMF_EXCEPTION( IncorrectParamException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual bool canImmediate( Mode mode ) const
+        { return bool((mode & Add) != 0); };
+    virtual void reset()
+        {
+            switch( m_dataType )
+            {
+            case Variant::type_integer:
+            case Variant::type_real:
+                m_value = Variant(); /* empty value for the first time */
+                break;
+            default:
+                VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual void handleValue( Mode mode, const Variant& inputValue )
+        {
+            if( inputValue.getType() != m_dataType )
+            {
+                VMF_EXCEPTION( IncorrectParamException, "Operation expects different data type!" );
+            }
+            if( mode == Add )
+            {
+                switch( m_dataType )
+                {
+                case Variant::type_integer:
+                    if( m_value.isEmpty() || (inputValue.get_integer() < m_value.get_integer()) )
+                        m_value = inputValue;
+                    break;
+                case Variant::type_real:
+                    if( m_value.isEmpty() || (inputValue.get_real() < m_value.get_real()) )
+                        m_value = inputValue;
+                    break;
+                default:
+                    VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+                }
+            }
+        };
+    virtual Variant getValue() const
+        { return m_value; };
 
 private:
-    FieldValue m_value;
+    Variant::Type m_dataType;
+    Variant m_value;
 };
 
 class MaxOperation: public IStatisticsOperation
 {
 public:
-    MaxOperation( unsigned dataType ) {};
+    MaxOperation()
+        : m_dataType( Variant::type_unknown ) {};
     virtual ~MaxOperation() {};
 
 public:
-    virtual std::string getName() const { return std::string("MaxOperation"); };
-    virtual bool canImmediate( Mode mode ) const { return true; };
-    virtual void handleValue( Mode mode, const FieldValue& fieldValue ) const {};
-    virtual void reset() {};
-    virtual FieldValue getValue() const { return m_value; };
+    virtual std::string getName() const
+        { return std::string( STD_OP_PREFIX "Max" ); };
+    virtual void setDataType( Variant::Type dataType )
+        {
+            switch( dataType )
+            {
+            case Variant::type_integer:
+            case Variant::type_real:
+                m_dataType = dataType;
+                break;
+            case Variant::type_unknown:
+                VMF_EXCEPTION( InternalErrorException, "Operation doesn't accept 'unknown' data type!" );
+            default:
+                VMF_EXCEPTION( IncorrectParamException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual bool canImmediate( Mode mode ) const
+        { return bool((mode & Add) != 0); };
+    virtual void reset()
+        {
+            switch( m_dataType )
+            {
+            case Variant::type_integer:
+            case Variant::type_real:
+                m_value = Variant(); /* empty value for the first time */
+                break;
+            default:
+                VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual void handleValue( Mode mode, const Variant& inputValue )
+        {
+            if( inputValue.getType() != m_dataType )
+            {
+                VMF_EXCEPTION( IncorrectParamException, "Operation expects different data type!" );
+            }
+            if( mode == Add )
+            {
+                switch( m_dataType )
+                {
+                case Variant::type_integer:
+                    if( m_value.isEmpty() || (inputValue.get_integer() > m_value.get_integer()) )
+                        m_value = inputValue;
+                    break;
+                case Variant::type_real:
+                    if( m_value.isEmpty() || (inputValue.get_real() > m_value.get_real()) )
+                        m_value = inputValue;
+                    break;
+                default:
+                    VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+                }
+            }
+        };
+    virtual Variant getValue() const
+        { return m_value; };
 
 private:
-    FieldValue m_value;
+    Variant::Type m_dataType;
+    Variant m_value;
 };
 
 class AverageOperation: public IStatisticsOperation
 {
 public:
-    AverageOperation( unsigned dataType ) {};
+    AverageOperation()
+        : m_dataType( Variant::type_unknown ) {};
     virtual ~AverageOperation() {};
 
 public:
-    virtual std::string getName() const { return std::string("AverageOperation"); };
-    virtual bool canImmediate( Mode mode ) const { return true; };
-    virtual void handleValue( Mode mode, const FieldValue& fieldValue ) const {};
-    virtual void reset() {};
-    virtual FieldValue getValue() const { return m_value; };
+    virtual std::string getName() const
+        { return std::string(  STD_OP_PREFIX "Average" ); };
+    virtual void setDataType( Variant::Type dataType )
+        {
+            switch( dataType )
+            {
+            case Variant::type_integer:
+            case Variant::type_real:
+                m_dataType = dataType;
+                break;
+            case Variant::type_unknown:
+                VMF_EXCEPTION( InternalErrorException, "Operation doesn't accept 'unknown' data type!" );
+            default:
+                VMF_EXCEPTION( IncorrectParamException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual bool canImmediate( Mode mode ) const
+        { return bool((mode & (Add | Remove)) != 0); };
+    virtual void reset()
+        {
+            switch( m_dataType )
+            {
+            case Variant::type_integer:
+                m_value = Variant( (vmf_integer)0 );
+                break;
+            case Variant::type_real:
+                m_value = Variant( (vmf_real)0 );
+                break;
+            default:
+                VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+            }
+            m_count = 0;
+        };
+    virtual void handleValue( Mode mode, const Variant& inputValue )
+        {
+            if( inputValue.getType() != m_dataType )
+            {
+                VMF_EXCEPTION( IncorrectParamException, "Operation expects different data type!" );
+            }
+            switch( m_dataType )
+            {
+            case Variant::type_integer:
+                switch( mode )
+                {
+                case Add:    ++m_count; m_value = Variant( m_value.get_integer() + inputValue.get_integer() ); break;
+                case Remove: --m_count; m_value = Variant( m_value.get_integer() - inputValue.get_integer() ); break;
+                default: /* not affected */ break;
+                }
+                break;
+            case Variant::type_real:
+                switch( mode )
+                {
+                case Add:    ++m_count; m_value = Variant( m_value.get_real() + inputValue.get_real() ); break;
+                case Remove: --m_count; m_value = Variant( m_value.get_real() - inputValue.get_real() ); break;
+                default: /* not affected */ break;
+                }
+                break;
+            default:
+                VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual Variant getValue() const
+        {
+            switch( m_dataType )
+            {
+            case Variant::type_integer:
+                return Variant( ((vmf_real) m_value.get_integer()) / m_count );
+            case Variant::type_real:
+                return Variant( ((vmf_real) m_value.get_real()) / m_count );
+            default:
+                VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+            }
+        };
 
 private:
-    FieldValue m_value;
+    Variant::Type m_dataType;
+    Variant m_value;
+    vmf_integer m_count;
 };
 
 class MedianOperation: public IStatisticsOperation
 {
 public:
-    MedianOperation( unsigned dataType ) {};
+    MedianOperation()
+        : m_dataType( Variant::type_unknown )
+        {
+            VMF_EXCEPTION( NotImplementedException, "'Median' operation not implemented yet!" );
+        };
     virtual ~MedianOperation() {};
 
 public:
-    virtual std::string getName() const { return std::string("MedianOperation"); };
-    virtual bool canImmediate( Mode mode ) const { return true; };
-    virtual void handleValue( Mode mode, const FieldValue& fieldValue ) const {};
-    virtual void reset() {};
-    virtual FieldValue getValue() const { return m_value; };
+    virtual std::string getName() const
+        { return std::string(  STD_OP_PREFIX "Median" ); };
+    virtual void setDataType( Variant::Type dataType )
+        {
+            switch( dataType )
+            {
+            default:
+                m_dataType = dataType;
+                break;
+            case Variant::type_unknown:
+                VMF_EXCEPTION( InternalErrorException, "Operation doesn't accept 'unknown' data type!" );
+            }
+        };
+    virtual bool canImmediate( Mode mode ) const
+        { return false; };
+    virtual void reset()
+        {};
+    virtual void handleValue( Mode mode, const Variant& inputValue )
+        {};
+    virtual Variant getValue() const
+        { return m_value; };
 
 private:
-    FieldValue m_value;
+    Variant::Type m_dataType;
+    Variant m_value;
 };
 
 class CountOperation: public IStatisticsOperation
 {
 public:
-    CountOperation( unsigned dataType ) {};
+    CountOperation()
+        : m_dataType( Variant::type_unknown ) {};
     virtual ~CountOperation() {};
 
 public:
-    virtual std::string getName() const { return std::string("CountOperation"); };
-    virtual bool canImmediate( Mode mode ) const { return true; };
-    virtual void handleValue( Mode mode, const FieldValue& fieldValue ) const {};
-    virtual void reset() {};
-    virtual FieldValue getValue() const { return m_value; };
+    virtual std::string getName() const
+        { return std::string( STD_OP_PREFIX "Count" ); };
+    virtual void setDataType( Variant::Type dataType )
+        {
+            switch( dataType )
+            {
+            default:
+                m_dataType = dataType;
+                break;
+            case Variant::type_unknown:
+                VMF_EXCEPTION( InternalErrorException, "Operation doesn't accept 'unknown' data type!" );
+            }
+        };
+    virtual bool canImmediate( Mode mode ) const
+        { return bool((mode & (Add | Remove | Change)) != 0); };
+    virtual void reset()
+        {
+            m_count = 0;
+        };
+    virtual void handleValue( Mode mode, const Variant& inputValue )
+        {
+            if( inputValue.getType() != m_dataType )
+            {
+                VMF_EXCEPTION( IncorrectParamException, "Operation expects different data type!" );
+            }
+            switch( mode )
+            {
+            case Add:    ++m_count; break;
+            case Remove: --m_count; break;
+            default: /* not affected */ break;
+            }
+        };
+    virtual Variant getValue() const
+        { return Variant( (vmf_integer)m_count ); };
 
 private:
-    FieldValue m_value;
+    Variant::Type m_dataType;
+    vmf_integer m_count;
 };
 
 class SumOperation: public IStatisticsOperation
 {
 public:
-    SumOperation( unsigned dataType ) {};
+    SumOperation()
+        : m_dataType( Variant::type_unknown ) {};
     virtual ~SumOperation() {};
 
 public:
-    virtual std::string getName() const { return std::string("SumOperation"); };
-    virtual bool canImmediate( Mode mode ) const { return true; };
-    virtual void handleValue( Mode mode, const FieldValue& fieldValue ) const {};
-    virtual void reset() {};
-    virtual FieldValue getValue() const { return m_value; };
+    virtual std::string getName() const
+        { return std::string( STD_OP_PREFIX "Sum" ); };
+    virtual void setDataType( Variant::Type dataType )
+        {
+            switch( dataType )
+            {
+            case Variant::type_integer:
+            case Variant::type_real:
+                m_dataType = dataType;
+                break;
+            case Variant::type_unknown:
+                VMF_EXCEPTION( InternalErrorException, "Operation doesn't accept 'unknown' data type!" );
+            default:
+                VMF_EXCEPTION( IncorrectParamException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual bool canImmediate( Mode mode ) const
+        { return bool((mode & (Add | Remove)) != 0); };
+    virtual void reset()
+        {
+            switch( m_dataType )
+            {
+            case Variant::type_integer:
+                m_value = Variant( (vmf_integer)0 );
+                break;
+            case Variant::type_real:
+                m_value = Variant( (vmf_real)0 );
+                break;
+            default:
+                VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual void handleValue( Mode mode, const Variant& inputValue )
+        {
+            if( inputValue.getType() != m_dataType )
+            {
+                VMF_EXCEPTION( IncorrectParamException, "Operation expects different data type!" );
+            }
+            switch( m_dataType )
+            {
+            case Variant::type_integer:
+                switch( mode )
+                {
+                case Add:    m_value = Variant( m_value.get_integer() + inputValue.get_integer() ); break;
+                case Remove: m_value = Variant( m_value.get_integer() - inputValue.get_integer() ); break;
+                default: /* not affected */ break;
+                }
+                break;
+            case Variant::type_real:
+                switch( mode )
+                {
+                case Add:    m_value = Variant( m_value.get_real() + inputValue.get_real() ); break;
+                case Remove: m_value = Variant( m_value.get_real() - inputValue.get_real() ); break;
+                default: /* not affected */ break;
+                }
+                break;
+            default:
+                VMF_EXCEPTION( InternalErrorException, "Operation can't be applied to such data type!" );
+            }
+        };
+    virtual Variant getValue() const
+        { return m_value; };
 
 private:
-    FieldValue m_value;
+    Variant::Type m_dataType;
+    Variant m_value;
 };
 
 class LastValueOperation: public IStatisticsOperation
 {
 public:
-    LastValueOperation( unsigned dataType ) {};
+    LastValueOperation()
+        : m_dataType( Variant::type_unknown ) {};
     virtual ~LastValueOperation() {};
 
 public:
-    virtual std::string getName() const { return std::string("LastValueOperation"); };
-    virtual bool canImmediate( Mode mode ) const { return true; };
-    virtual void handleValue( Mode mode, const FieldValue& fieldValue ) const {};
-    virtual void reset() {};
-    virtual FieldValue getValue() const { return m_value; };
+    virtual std::string getName() const
+        { return std::string( STD_OP_PREFIX "LastValue" ); };
+    virtual void setDataType( Variant::Type dataType )
+        {
+            switch( dataType )
+            {
+            default:
+                m_dataType = dataType;
+                break;
+            case Variant::type_unknown:
+                VMF_EXCEPTION( InternalErrorException, "Operation doesn't accept 'unknown' data type!" );
+            }
+        };
+    virtual bool canImmediate( Mode mode ) const
+        { return bool((mode & (Add | Change)) != 0); };
+    virtual void reset()
+        {
+            switch( m_dataType )
+            {
+            default:
+                m_value = Variant(); /* empty value for the first time */
+                break;
+            case Variant::type_unknown:
+                VMF_EXCEPTION( InternalErrorException, "Operation doesn't accept 'unknown' data type!" );
+            }
+        };
+    virtual void handleValue( Mode mode, const Variant& inputValue )
+        {
+            if( inputValue.getType() != m_dataType )
+            {
+                VMF_EXCEPTION( IncorrectParamException, "Operation expects different data type!" );
+            }
+            switch( mode )
+            {
+            case Add: /* fall down */
+            case Change: m_value = inputValue; break;
+            default: /* not affected */ break; // i.e. field set to dirty state and need to be updated on rescan
+            }
+        };
+    virtual Variant getValue() const
+        { return m_value; };
 
 private:
-    FieldValue m_value;
+    Variant::Type m_dataType;
+    Variant m_value;
 };
 
 // class IStatisticsOperation
@@ -162,58 +488,58 @@ IStatisticsOperation::~IStatisticsOperation()
 std::shared_ptr< IStatisticsOperation > IStatisticsOperation::create( Type operationType, Variant::Type dataType )
 {
     std::shared_ptr< IStatisticsOperation > operation( nullptr );
-    bool standard = true;
+    bool isStandard = true;
     switch( operationType )
     {
     case Min:
-        operation = std::make_shared< MinOperation >( dataType );
+        operation = std::make_shared< MinOperation >();
         break;
     case Max:
-        operation = std::make_shared< MaxOperation >( dataType );
+        operation = std::make_shared< MaxOperation >();
         break;
     case Average:
-        operation = std::make_shared< AverageOperation >( dataType );
+        operation = std::make_shared< AverageOperation >();
         break;
     case Median:
-        operation = std::make_shared< MedianOperation >( dataType );
+        operation = std::make_shared< MedianOperation >();
         break;
     case Count:
-        operation = std::make_shared< CountOperation >( dataType );
+        operation = std::make_shared< CountOperation >();
         break;
     case Sum:
-        operation = std::make_shared< SumOperation >( dataType );
+        operation = std::make_shared< SumOperation >();
         break;
     case LastValue:
-        operation = std::make_shared< LastValueOperation >( dataType );
+        operation = std::make_shared< LastValueOperation >();
         break;
     default:
         operation = MetadataStream::findUserOperation( operationType /*, dataType*/ );
-        standard = false;
+        isStandard = false;
         break;
     }
-    return validate( operation, standard );
+    validate( operation, isStandard );
+    operation->setDataType( dataType );
+    operation->reset();
+    return operation;
 }
 
-std::shared_ptr< IStatisticsOperation > IStatisticsOperation::validate(
-        std::shared_ptr< IStatisticsOperation > operation,
-        bool standard )
+void IStatisticsOperation::validate( std::shared_ptr< IStatisticsOperation > operation, bool isStandard )
 {
     if( operation == nullptr )
     {
-        VMF_EXCEPTION(NullPointerException, "Description pointer is empty!" );
+        VMF_EXCEPTION( NullPointerException, "Description pointer is empty!" );
     }
     if( !operation->canImmediate(Add) )
     {
-        if( standard )
+        if( isStandard )
         {
-            VMF_EXCEPTION(InternalErrorException, "Standard operation doesn't provide an Add/Immediate capability!" );
+            VMF_EXCEPTION( InternalErrorException, "Standard operation doesn't provide an Add/Immediate capability!" );
         }
         else
         {
-            VMF_EXCEPTION(NotImplementedException, "User operation doesn't provide an Add/Immediate capability!" );
+            VMF_EXCEPTION( NotImplementedException, "User operation doesn't provide an Add/Immediate capability!" );
         }
     }
-    return operation;
 }
 
 // class StatisticsDesc
@@ -282,7 +608,7 @@ void StatisticsField::setDirty( bool dirtyState )
     m_dirty = dirtyState;
 }
 
-FieldValue StatisticsField::getValue() const
+Variant StatisticsField::getValue() const
 {
     return m_operation->getValue();
 }
