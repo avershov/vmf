@@ -144,6 +144,7 @@ public:
             const std::string& fieldName,
             unsigned operationType );
     const std::shared_ptr< StatisticsField > findStatisticsField( const std::string& statisticsName ) const;
+    std::vector< std::shared_ptr< StatisticsField >> getStatisticsFields() const;
 
 protected:
     void setSchemaName( std::string schemaName );

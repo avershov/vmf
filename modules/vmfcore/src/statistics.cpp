@@ -661,7 +661,6 @@ void Statistics::handleMetadata(
                 }
             }
         }
-
     }
 }
 
@@ -699,7 +698,6 @@ void Statistics::handleMetadataField(
                 }
             }
         }
-
     }
 }
 
@@ -837,6 +835,11 @@ const std::shared_ptr< StatisticsField > Statistics::findStatisticsField( const 
         return *it;
 
     return nullptr;
+}
+
+std::vector< std::shared_ptr< StatisticsField >> Statistics::getStatisticsFields() const
+{
+    return m_fields;
 }
 
 std::shared_ptr< MetadataSchema > Statistics::getSchema() const
