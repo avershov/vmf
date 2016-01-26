@@ -922,11 +922,11 @@ unsigned MetadataStream::registerUserOperation( std::shared_ptr< IStatisticsOper
 
     if( it != m_userOperations.end() )
     {
-        return userBegin + std::distance( m_userOperations.begin(), it );
+        return userBegin + unsigned( std::distance( m_userOperations.begin(), it ));
     }
     else
     {
-        unsigned type = userBegin + m_userOperations.size();
+        unsigned type = userBegin + unsigned( m_userOperations.size() );
         m_userOperations.push_back( operation );
         return type;
     }
