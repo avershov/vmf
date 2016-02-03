@@ -31,6 +31,7 @@
 #include "metadatainternal.hpp"
 #include "metadataset.hpp"
 #include "metadataschema.hpp"
+#include "statistics.hpp"
 #include "iquery.hpp"
 #include <map>
 #include <memory>
@@ -337,6 +338,17 @@ public:
         long long frameIndex, long long numOfFrames,
         long long& timestamp, long long& duration );
 
+    void addStat( const std::string& name, const std::vector< StatField >& fields, StatUpdateMode::Type updateMode );
+    Stat* getStat( const std::string& name ) const;
+    std::vector< std::string > getAllStatNames() const;
+
+    /*!
+    * \brief Notify statistics object(s) about statistics-related events
+    * \param action [in] action
+    * \param spMetadata [in] pointer to metadata object
+    */
+    void notifyStat(StatAction::Type action, std::shared_ptr< Metadata > spMetadata);
+
 protected:
     void dataSourceCheck();
     std::shared_ptr<Metadata> import( MetadataStream& srcStream, std::shared_ptr< Metadata >& spMetadata, std::map< IdType, IdType >& mapIds, 
@@ -344,6 +356,8 @@ protected:
     void internalAdd(const std::shared_ptr< Metadata >& spMetadata);
 
 private:
+    void clearStats();
+
     OpenMode m_eMode;
     std::string m_sFilePath;
     MetadataSet m_oMetadataSet;
@@ -357,6 +371,7 @@ private:
     std::shared_ptr<IDataSource> dataSource;
     vmf::IdType nextId;
     std::string m_sChecksumMedia;
+    std::vector< Stat* > m_stats;
 };
 
 }
