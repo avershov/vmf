@@ -138,8 +138,8 @@ private:
 
 public:
     StatField( const std::string& name, const std::string& schemaName,
-                        const std::string& metadataName, const std::string& fieldName,
-                        const std::string& opName );
+               const std::string& metadataName, const std::string& fieldName,
+               const std::string& opName );
     explicit StatField( const StatField& other );
     StatField();
     ~StatField();
