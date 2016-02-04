@@ -36,52 +36,51 @@ string workingPath;
 
 void copyFile(const string& srcName, const char *dstName);
 
-//class StrCatOp: public vmf::IStatOp
-//{
-//public:
-//    StrCatOp() {};
-//    virtual ~StrCatOp() {};
-//
-//public:
-//    virtual std::string getName() const
-//        { return std::string( "StrCatOp" ); };
-//    virtual void setDataType( vmf::Variant::Type dataType )
-//        {
-//            switch( dataType )
-//            {
-//            case vmf::Variant::type_string:
-//                break;
-//            default:
-//                VMF_EXCEPTION( vmf::IncorrectParamException, "Operation can't be applied to such data type!" );
-//            }
-//        };
-//    virtual bool canImmediate( Mode mode ) const
-//        { return bool((mode & Add) != 0); };
-//    virtual void reset()
-//        {
-//            m_value.erase();
-//        };
-//    virtual void handleValue( Mode mode, const vmf::Variant& inputValue )
-//        {
-//            if( inputValue.getType() != vmf::Variant::type_string )
-//            {
-//                VMF_EXCEPTION( vmf::IncorrectParamException, "Operation expects different data type!" );
-//            }
-//            if( mode == Add )
-//            {
-//                if( !m_value.empty() )
-//                    m_value += " | ";
-//                m_value += inputValue.get_string();
-//            }
-//        };
-//    virtual vmf::Variant getValue() const
-//        { return vmf::Variant( m_value ); };
-//
-//private:
-//    std::string m_value;
-//};
+class StrCatOp: public vmf::IStatOp
+{
+public:
+    StrCatOp()
+        {}
+    virtual ~StrCatOp()
+        {}
 
-static std::ostream& operator<<( std::ostream& os, const vmf::Variant& value )
+public:
+    virtual const std::string& getName() const
+        { return className; }
+    virtual void reset()
+        { m_value = ""; }
+    virtual bool handle( vmf::StatAction::Type action, const vmf::Variant& inputValue )
+        {
+            if( inputValue.getType() != vmf::Variant::type_string )
+                VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
+            switch( action )
+            {
+            case vmf::StatAction::Add:
+                if( !m_value.empty() )
+                    m_value += " | ";
+                m_value += inputValue.get_string();
+                break;
+            case vmf::StatAction::Remove:
+                return false;
+            }
+            return true;
+        }
+    virtual const vmf::Variant& getValue() const
+        { m_temp = vmf::Variant( (vmf::vmf_string)m_value ); return m_temp; }
+
+private:
+    std::string m_value;
+    mutable vmf::Variant m_temp; // temp return value for getValue()
+
+public:
+    static IStatOp* createInstance()
+        { return new StrCatOp(); }
+    static const std::string className;
+};
+
+const std::string StrCatOp::className = "User.StrCatOp";
+
+inline std::ostream& operator<<( std::ostream& os, const vmf::Variant& value )
 {
     os << "(" << value.getTypeName() << ") " << value.toString();
     return os;
@@ -98,7 +97,7 @@ static void dumpStatistics( const vmf::MetadataStream& mdStream )
         std::for_each( statNames.begin(), statNames.end(), [&]( const std::string& statName )
         {
             const vmf::Stat* stat = mdStream.getStat( statName );
-            std::cout << "statistics: '" << stat->getName() << std::endl;
+            std::cout << "statistics: '" << stat->getName() << "'" << std::endl;
 
             std::vector< std::string > fieldNames = stat->getAllFieldNames();
             if( !fieldNames.empty() )
@@ -199,20 +198,17 @@ int sample(int argc, char *argv[])
     // Add schema to metadata stream
     mdStream.addSchema(gpsSchema);
 
+    // Register user operation: exactly one of two calls must be issued once for each user op
+    //vmf::StatOpFactory::registerUserOp( StrCatOp::className, StrCatOp::createInstance );
+    vmf::StatOpFactory::registerUserOp< StrCatOp >();
+
     // Set up statistics object(s)
     std::vector< vmf::StatField > fields;
     fields.push_back( vmf::StatField( GPS_COUNT_COORD_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_COORD_FIELD, vmf::StatOpFactory::countName ));
     fields.push_back( vmf::StatField( GPS_COUNT_TIME_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_TIME_FIELD, vmf::StatOpFactory::countName ));
+    fields.push_back( vmf::StatField( GPS_STRCAT_COORD_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_COORD_FIELD, StrCatOp::className ));
+    fields.push_back( vmf::StatField( GPS_STRCAT_TIME_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_TIME_FIELD, StrCatOp::className ));
     mdStream.addStat( GPS_STAT_NAME, fields, vmf::StatUpdateMode::Manual );
-
-//    std::shared_ptr< vmf::Stat > spStatistics = std::make_shared< vmf::Stat >();
-//    mdStream.setStatistics( spStatistics, GPS_SCHEMA_NAME );
-//    spStatistics->addField( GPS_COUNT_COORD_NAME, GPS_DESC, GPS_COORD_FIELD, vmf::IStatOp::Count );
-//    spStatistics->addField( GPS_COUNT_TIME_NAME, GPS_DESC, GPS_TIME_FIELD, vmf::IStatOp::Count );
-//    unsigned strcatCoordOperation = vmf::MetadataStream::registerUserOperation( std::make_shared< StrCatOp >() );
-//    unsigned strcatTimeOperation = vmf::MetadataStream::registerUserOperation( std::make_shared< StrCatOp >() );
-//    spStatistics->addField( GPS_STRCAT_COORD_NAME, GPS_DESC, GPS_COORD_FIELD, strcatCoordOperation );
-//    spStatistics->addField( GPS_STRCAT_TIME_NAME, GPS_DESC, GPS_TIME_FIELD, strcatTimeOperation );
 
     std::shared_ptr<vmf::Metadata> gpsMetadata;
 

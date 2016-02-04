@@ -101,7 +101,8 @@ private:
     Variant m_value;
 
 public:
-    static IStatOp* createInstance() { return new StatOpMin(); }
+    static IStatOp* createInstance()
+        { return new StatOpMin(); }
     static const std::string className;
 };
 
@@ -167,7 +168,8 @@ private:
     Variant m_value;
 
 public:
-    static IStatOp* createInstance() { return new StatOpMax(); }
+    static IStatOp* createInstance()
+        { return new StatOpMax(); }
     static const std::string className;
 };
 
@@ -250,7 +252,8 @@ private:
     mutable Variant m_temp; // temp return value for getValue()
 
 public:
-    static IStatOp* createInstance() { return new StatOpAverage(); }
+    static IStatOp* createInstance()
+        { return new StatOpAverage(); }
     static const std::string className;
 };
 
@@ -290,7 +293,8 @@ private:
     mutable Variant m_temp; // temp return value for getValue()
 
 public:
-    static IStatOp* createInstance() { return new StatOpCount(); }
+    static IStatOp* createInstance()
+        { return new StatOpCount(); }
     static const std::string className;
 };
 
@@ -356,7 +360,8 @@ private:
     Variant m_value;
 
 public:
-    static IStatOp* createInstance() { return new StatOpSum(); }
+    static IStatOp* createInstance()
+        { return new StatOpSum(); }
     static const std::string className;
 };
 
@@ -392,7 +397,8 @@ private:
     Variant m_value;
 
 public:
-    static IStatOp* createInstance() { return new StatOpLast(); }
+    static IStatOp* createInstance()
+        { return new StatOpLast(); }
     static const std::string className;
 };
 
@@ -453,13 +459,6 @@ void StatOpFactory::registerUserOp( const std::string& name, InstanceCreator cre
     }
 }
 
-template< class UserOp > void StatOpFactory::registerUserOp()
-{
-    static_assert( std::is_base_of< IStatOp, UserOp >::value,
-                   "User operation must implement IStatOp interface" );
-    registerUserOp( UserOp::className, UserOp::createInstance );
-}
-
 StatOpFactory::UserOpMap& StatOpFactory::getClassMap()
 {
     // Singletone model based on initialisation of function-local static object
@@ -468,12 +467,12 @@ StatOpFactory::UserOpMap& StatOpFactory::getClassMap()
 
     if( ops.empty() )
     {
-        ops.insert( UserOpItem( minName    , StatOpMin::createInstance ));
-        ops.insert( UserOpItem( maxName    , StatOpMax::createInstance ));
-        ops.insert( UserOpItem( averageName, StatOpMax::createInstance ));
-        ops.insert( UserOpItem( countName  , StatOpMax::createInstance ));
-        ops.insert( UserOpItem( sumName    , StatOpMax::createInstance ));
-        ops.insert( UserOpItem( lastName   , StatOpMax::createInstance ));
+        ops.insert( UserOpItem( minName    , StatOpMin    ::createInstance ));
+        ops.insert( UserOpItem( maxName    , StatOpMax    ::createInstance ));
+        ops.insert( UserOpItem( averageName, StatOpAverage::createInstance ));
+        ops.insert( UserOpItem( countName  , StatOpCount  ::createInstance ));
+        ops.insert( UserOpItem( sumName    , StatOpSum    ::createInstance ));
+        ops.insert( UserOpItem( lastName   , StatOpLast   ::createInstance ));
     }
 
     return ops;

@@ -67,7 +67,15 @@ private:
 public:
     static IStatOp* create( const std::string& name );
     static void registerUserOp( const std::string& name, InstanceCreator createInstance );
-    template< class UserOp > static void registerUserOp(); // required: className & createInstance members
+
+    // required: UserOp::className & UserOp::createInstance members
+    template< class UserOp >
+    inline static void registerUserOp()
+        {
+            static_assert( std::is_base_of< IStatOp, UserOp >::value,
+                           "User operation must implement IStatOp interface" );
+            registerUserOp( UserOp::className, UserOp::createInstance );
+        }
 
     static const char minName[];
     static const char maxName[];

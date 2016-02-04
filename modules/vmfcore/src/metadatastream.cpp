@@ -863,7 +863,9 @@ void MetadataStream::addStat(const std::string& name, const std::vector< StatFie
         VMF_EXCEPTION(IncorrectParamException, "Statistics object already exists: '" + name + "'");
     }
 
-    m_stats.push_back(new Stat(name, fields, updateMode));
+    Stat* stat = new Stat(name, fields, updateMode);
+    m_stats.push_back(stat);
+    stat->setStream(this);
 }
 
 Stat* MetadataStream::getStat(const std::string& name) const
@@ -899,7 +901,13 @@ void MetadataStream::clearStats()
     {
         for (auto it = m_stats.begin(); it != m_stats.end();  ++it)
         {
-            delete *it; *it = nullptr;
+            Stat* stat = *it;
+            if (stat != nullptr)
+            {
+                stat->setStream(nullptr);
+                delete stat;
+                *it = nullptr;
+            }
         }
         std::vector< Stat* >().swap(m_stats); // m_stats.clear()
     }
