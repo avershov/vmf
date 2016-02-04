@@ -102,11 +102,17 @@ private:
             : m_name( name ), m_schemaName( schemaName ), m_metadataName( metadataName ),
               m_metadataDesc( nullptr ), m_fieldName( fieldName ), m_fieldDesc(),
               m_opName( opName ), m_pMetadataStream( nullptr ) {}
+        explicit StatFieldDesc( const StatFieldDesc& other )
+            : m_name( other.m_name ), m_schemaName( other.m_schemaName ), m_metadataName( other.m_metadataName ),
+              m_metadataDesc( nullptr ), m_fieldName( other.m_fieldName ), m_fieldDesc(),
+              m_opName( other.m_opName ), m_pMetadataStream( nullptr ) {}
         StatFieldDesc()
             : m_name( "" ), m_schemaName( "" ), m_metadataName( "" ),
               m_metadataDesc( nullptr ), m_fieldName( "" ), m_fieldDesc(),
               m_opName( "" ), m_pMetadataStream( nullptr ) {}
         ~StatFieldDesc() {}
+
+        StatFieldDesc& operator=( const StatFieldDesc& other );
 
         const std::string& getName() const { return m_name; }
         const std::string& getSchemaName() const { return m_schemaName; }
@@ -137,6 +143,8 @@ public:
     explicit StatField( const StatField& other );
     StatField();
     ~StatField();
+
+    StatField& operator=( const StatField& other );
 
     const std::string& getName() const { return m_desc.getName(); }
     std::shared_ptr< MetadataDesc > getMetadataDesc() const { return m_desc.getMetadataDesc(); }

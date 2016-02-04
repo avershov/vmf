@@ -521,6 +521,35 @@ StatField::~StatField()
     delete m_op; m_op = nullptr;
 }
 
+StatField::StatFieldDesc& StatField::StatFieldDesc::operator=( const StatField::StatFieldDesc& other )
+{
+    m_name         = other.m_name;
+    m_schemaName   = other.m_schemaName;
+    m_metadataName = other.m_metadataName;
+    m_metadataDesc = nullptr;
+    m_fieldName    = other.m_fieldName;
+    m_fieldDesc    = FieldDesc();
+    m_opName       = other.m_opName;
+
+    setStream( nullptr );
+    setStream( other.getStream() );
+
+    return *this;
+}
+
+StatField& StatField::operator=( const StatField& other )
+{
+    m_desc = other.m_desc;
+
+    delete m_op;
+    m_op = (other.m_op != nullptr) ? StatOpFactory::create( other.m_op->getName() ) : nullptr;
+
+    m_state = other.m_state;
+    m_isActive = other.m_isActive;
+
+    return *this;
+}
+
 StatState::Type StatField::handle( StatAction::Type action, std::shared_ptr< Metadata > metadata )
 {
     const std::shared_ptr< MetadataDesc > metadataDesc = metadata->getDesc();
