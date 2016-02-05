@@ -53,6 +53,7 @@ bool MetadataStream::open( const std::string& sFilePath, MetadataStream::OpenMod
         dataSource->openFile(m_sFilePath, eMode);
         dataSource->loadVideoSegments(videoSegments);
         dataSource->load(m_mapSchemas);
+        dataSource->loadStats(*this);
         m_eMode = eMode;
         m_sFilePath = sFilePath;
         nextId = dataSource->loadId();
@@ -131,6 +132,8 @@ bool MetadataStream::save()
                 dataSource->saveSchema(p.first, *this);
                 dataSource->save(p.second);
             }
+
+            dataSource->saveStats(m_stats);
 
             dataSource->saveVideoSegments(videoSegments);
 

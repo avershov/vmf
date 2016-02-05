@@ -38,7 +38,14 @@ class MetadataStream;
 
 struct StatState { enum Type { UpToDate=1, NeedUpdate=2, NeedRescan=3 }; };
 struct StatAction { enum Type { Add, Remove /*, Change*/ }; };
-struct StatUpdateMode { enum Type { Disabled, Manual, OnAdd, OnTimer }; };
+
+struct StatUpdateMode
+{
+    enum Type { Disabled, Manual, OnAdd, OnTimer };
+
+    static std::string toString( StatUpdateMode::Type val );
+    static StatUpdateMode::Type fromString( const std::string& str );
+};
 
 class Stat;
 class StatField;
@@ -149,6 +156,8 @@ public:
     const std::string& getName() const { return m_desc.getName(); }
     std::shared_ptr< MetadataDesc > getMetadataDesc() const { return m_desc.getMetadataDesc(); }
     const std::string& getFieldName() const { return m_desc.getFieldName(); }
+    const std::string& getOpName() const { return m_desc.getOpName(); }
+
     StatState::Type getState() const { return m_state; }
 
     void update( bool doRescan = false );

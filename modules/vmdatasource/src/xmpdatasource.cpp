@@ -20,6 +20,7 @@
 
 #include "xmpschemasource.hpp"
 #include "xmpmetadatasource.hpp"
+#include "xmpstatsource.hpp"
 
 #define VMF_GLOBAL_NEXT_ID "next-id"
 #define VMF_GLOBAL_CHECKSUM "media-checksum"
@@ -117,6 +118,7 @@ void XMPDataSource::openFile(const MetaString& fileName, MetadataStream::OpenMod
             }
         }
         xmpFile.GetXMP(xmp.get());
+        statSource = make_shared<XMPStatSource>(xmp);
         schemaSource = make_shared<XMPSchemaSource>(xmp);
         metadataSource = make_shared<XMPMetadataSource>(xmp);
    }
@@ -138,6 +140,7 @@ void XMPDataSource::closeFile()
     {
         metadataSource.reset();
         schemaSource.reset();
+        statSource.reset();
         xmp.reset();
         xmpFile.CloseFile();
     }
@@ -268,14 +271,51 @@ void XMPDataSource::load(std::map<MetaString, std::shared_ptr<MetadataSchema> >&
     }
 }
 
+void XMPDataSource::saveStats(const std::vector< Stat* >& stats)
+{
+    statSourceCheck();
+    try
+    {
+        statSource->save(stats);
+        pushChanges();
+    }
+    catch(const XMP_Error& e)
+    {
+        VMF_EXCEPTION(DataStorageException, e.GetErrMsg());
+    }
+    catch(const std::exception& e)
+    {
+        VMF_EXCEPTION(DataStorageException, e.what());
+    }
+}
+
+void XMPDataSource::loadStats(MetadataStream& stream)
+{
+    statSourceCheck();
+    try
+    {
+        statSource->load(stream);
+    }
+    catch(const XMP_Error& e)
+    {
+        VMF_EXCEPTION(DataStorageException, e.GetErrMsg());
+    }
+    catch(const std::exception& e)
+    {
+        VMF_EXCEPTION(DataStorageException, e.what());
+    }
+}
+
 void XMPDataSource::clear()
 {
     metadataSourceCheck();
     schemaSourceCheck();
+    statSourceCheck();
     try
     {
         metadataSource->clear();
         schemaSource->clear();
+        statSource->clear();
         pushChanges();
     }
     catch(const XMP_Error& e)
@@ -326,6 +366,14 @@ void XMPDataSource::schemaSourceCheck()
     if (!schemaSource)
     {
         VMF_EXCEPTION(DataStorageException, "Schema source doesn't exist");
+    }
+}
+
+void XMPDataSource::statSourceCheck()
+{
+    if (!statSource)
+    {
+        VMF_EXCEPTION(DataStorageException, "Statistics source doesn't exist");
     }
 }
 

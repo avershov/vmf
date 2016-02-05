@@ -292,6 +292,9 @@ int sample(int argc, char *argv[])
         cout << "\tAssociated time is: " << time << endl;
     }
 
+    // dump statistics
+    dumpStatistics( loadStream );
+
     // Close metadata stream
     loadStream.close();
 

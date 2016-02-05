@@ -37,6 +37,29 @@
 namespace vmf
 {
 
+// struct StatUpdateMode
+
+std::string StatUpdateMode::toString( StatUpdateMode::Type val )
+{
+    switch( val )
+    {
+    case StatUpdateMode::Disabled: return "StatUpdateMode::Disabled";
+    case StatUpdateMode::Manual:   return "StatUpdateMode::Manual";
+    case StatUpdateMode::OnAdd:    return "StatUpdateMode::OnAdd";
+    case StatUpdateMode::OnTimer:  return "StatUpdateMode::OnTimer";
+    }
+    VMF_EXCEPTION( vmf::InternalErrorException, "Enum value is invalid upon conversion to string" );
+}
+
+StatUpdateMode::Type StatUpdateMode::fromString( const std::string& str )
+{
+    if( str == "StatUpdateMode::Disabled" ) return StatUpdateMode::Disabled;
+    if( str == "StatUpdateMode::Manual"   ) return StatUpdateMode::Manual;
+    if( str == "StatUpdateMode::OnAdd"    ) return StatUpdateMode::OnAdd;
+    if( str == "StatUpdateMode::OnTimer"  ) return StatUpdateMode::OnTimer;
+    VMF_EXCEPTION( vmf::InternalErrorException, "Enum value is invalid upon conversion from string" );
+}
+
 // class IStatOp: builtin operations
 
 class StatOpMin: public IStatOp
