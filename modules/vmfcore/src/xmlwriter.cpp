@@ -330,7 +330,8 @@ std::string XMLWriter::store(const IdType& nextId,
     const std::string& checksum,
     const std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments,
     const std::vector<std::shared_ptr<MetadataSchema>>& schemas,
-    const MetadataSet& set)
+    const MetadataSet& set,
+    const std::vector< Stat* >& stats)
 {
     if(schemas.empty())
         VMF_EXCEPTION(vmf::IncorrectParamException, "Input schemas vector is empty");
@@ -483,6 +484,20 @@ std::string XMLWriter::store(const std::vector<std::shared_ptr<MetadataStream::V
     xmlCleanupParser();
     xmlMemoryDump();
 
+    return outputString;
+}
+
+std::string XMLWriter::store(const Stat* stat)
+{
+    std::string outputString; // = (char *)buf;
+// empty stub
+    return outputString;
+}
+
+std::string XMLWriter::store(const std::vector< Stat* >& stats)
+{
+    std::string outputString; // = (char *)buf;
+// empty stub
     return outputString;
 }
 

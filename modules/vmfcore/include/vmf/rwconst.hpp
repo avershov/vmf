@@ -77,4 +77,17 @@
 #define ATTR_METADATA_DURATION_HI "duration-hi"
 #define ATTR_METADATA_DURATION_LO "duration-lo"
 
+#define TAG_STATS_ARRAY "stats-array"
+#define TAG_STAT "stat"
+#define TAG_STAT_FIELDS_ARRAY "fields-array"
+#define TAG_STAT_FIELD "field"
+
+#define ATTR_STAT_NAME "name"
+#define ATTR_STAT_UPDATE_MODE "update-mode"
+#define ATTR_STAT_FIELD_NAME "name"
+#define ATTR_STAT_FIELD_SCHEMA_NAME "schema-name"
+#define ATTR_STAT_FIELD_METADATA_NAME "metadata-name"
+#define ATTR_STAT_FIELD_FIELD_NAME "field-name"
+#define ATTR_STAT_FIELD_OP_NAME "op-name"
+
 #endif /* __VMF_RWCONST_H__ */

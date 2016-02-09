@@ -439,7 +439,8 @@ bool XMLReader::parseMetadata(const std::string& text,
 bool XMLReader::parseAll(const std::string& text, IdType& nextId, std::string& filepath, std::string& checksum,
     std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments,
     std::vector<std::shared_ptr<MetadataSchema>>& schemas,
-    std::vector<std::shared_ptr<MetadataInternal>>& metadata)
+    std::vector<std::shared_ptr<MetadataInternal>>& metadata,
+    MetadataStream& stream)
 {
     if(text.empty())
     {
@@ -591,6 +592,11 @@ bool XMLReader::parseVideoSegments(const std::string& text, std::vector<std::sha
     xmlCleanupParser();
     xmlMemoryDump();
 
+    return true;
+}
+
+bool XMLReader::parseStats(const std::string& text, MetadataStream& stream)
+{
     return true;
 }
 
