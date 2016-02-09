@@ -252,6 +252,65 @@ static std::shared_ptr<MetadataStream::VideoSegment> parseSegmentFromNode(xmlNod
     return spSegment;
 }
 
+static void parseStatFromNode(xmlNodePtr statNode, MetadataStream& stream)
+{
+    std::string statName, updateModeStr;
+
+    for(xmlAttr* cur_prop = statNode->properties; cur_prop; cur_prop = cur_prop->next)
+    {
+        if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_NAME))
+            statName = (char*)xmlGetProp(statNode, cur_prop->name);
+        else if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_UPDATE_MODE))
+            updateModeStr = (char*)xmlGetProp(statNode, cur_prop->name);
+    }
+
+    if(statName.empty())
+        VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat name");
+    if(updateModeStr.empty())
+        VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat update mode");
+
+    StatUpdateMode::Type updateMode = StatUpdateMode::fromString(updateModeStr);
+
+    std::vector< StatField > fields;
+
+    for(xmlNode *fieldNode = statNode->children; fieldNode; fieldNode = fieldNode->next)
+    {
+        if(fieldNode->type == XML_ELEMENT_NODE && (char*)fieldNode->name == std::string(TAG_STAT_FIELD))
+        {
+            std::string fieldName, schemaName, metadataName, metadataFieldName, opName;
+
+            for(xmlAttr* cur_prop = fieldNode->properties; cur_prop; cur_prop = cur_prop->next)
+            {
+                if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_FIELD_NAME))
+                    fieldName = (char*)xmlGetProp(fieldNode, cur_prop->name);
+                else if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_FIELD_SCHEMA_NAME))
+                    schemaName = (char*)xmlGetProp(fieldNode, cur_prop->name);
+                else if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_FIELD_METADATA_NAME))
+                    metadataName = (char*)xmlGetProp(fieldNode, cur_prop->name);
+                else if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_FIELD_FIELD_NAME))
+                    metadataFieldName = (char*)xmlGetProp(fieldNode, cur_prop->name);
+                else if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_FIELD_OP_NAME))
+                    opName = (char*)xmlGetProp(fieldNode, cur_prop->name);
+
+                if(fieldName.empty())
+                    VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat field name");
+                if(schemaName.empty())
+                    VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat field metadata schema name");
+                if(metadataName.empty())
+                    VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat field metadata name");
+                if(metadataFieldName.empty())
+                    VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat field metadata field name");
+                if(opName.empty())
+                    VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat field operation name");
+
+                fields.push_back(StatField(fieldName, schemaName, metadataName, metadataFieldName, opName));
+            }
+        }
+    }
+
+    stream.addStat(statName, fields, updateMode);
+}
+
 XMLReader::XMLReader(){}
 XMLReader::~XMLReader(){}
 
@@ -597,6 +656,86 @@ bool XMLReader::parseVideoSegments(const std::string& text, std::vector<std::sha
 
 bool XMLReader::parseStats(const std::string& text, MetadataStream& stream)
 {
+    if(text.empty())
+    {
+        VMF_LOG_ERROR("Empty input XML string");
+        return false;
+    }
+
+    xmlParserCtxtPtr ctxt = xmlNewParserCtxt();
+    if (ctxt == NULL)
+    {
+        VMF_LOG_ERROR("Failed to allocate XML parser context");
+        return false;
+    }
+    xmlDocPtr doc = xmlCtxtReadMemory(ctxt, text.c_str(), (int)text.size(), NULL, NULL, 0);
+
+    //xmlDocPtr doc = xmlParseMemory(text.c_str(), (int)text.size());
+    if(doc == NULL)
+    {
+        VMF_LOG_ERROR("Can't create XML document");
+        return false;
+    }
+
+    xmlNodePtr root = xmlDocGetRootElement(doc);
+    if(root == NULL)
+    {
+        VMF_LOG_ERROR("XML tree has no root element");
+        return false;
+    }
+
+    if( (char*)root->name == std::string(TAG_STAT) )
+    {
+        try
+        {
+            parseStatFromNode(root, stream);
+        }
+        catch(Exception& e)
+        {
+            VMF_LOG_ERROR("Exception: %s", e.what());
+            return false;
+        }
+    }
+    else if( (char*)root->name == std::string(TAG_STATS_ARRAY) )
+    {
+        for(xmlNodePtr node = root->children; node; node = node->next)
+            if(node->type == XML_ELEMENT_NODE && (char*)node->name == std::string(TAG_STAT))
+            {
+                try
+                {
+                    parseStatFromNode(node, stream);
+                }
+                catch(Exception& e)
+                {
+                    VMF_LOG_ERROR("Exception: %s", e.what());
+                    return false;
+                }
+            }
+    }
+    else if( (char*)root->name == std::string(TAG_VMF) )
+    {
+        for(xmlNodePtr rootChildNode = root->children; rootChildNode; rootChildNode = rootChildNode->next)
+            if(rootChildNode->type == XML_ELEMENT_NODE && (char*)rootChildNode->name == std::string(TAG_STATS_ARRAY))
+                for(xmlNodePtr node = rootChildNode->children; node; node = node->next)
+                    if(node->type == XML_ELEMENT_NODE && (char*)node->name == std::string(TAG_STAT))
+                    {
+                        try
+                        {
+                            parseStatFromNode(node, stream);
+                        }
+                        catch(Exception& e)
+                        {
+                            VMF_LOG_ERROR("Exception: %s", e.what());
+                            return false;
+                        }
+                    }
+    }
+
+    xmlFreeDoc(doc);
+    xmlFreeParserCtxt(ctxt);
+    xmlCleanupParser();
+    xmlMemoryDump();
+
     return true;
 }
 
