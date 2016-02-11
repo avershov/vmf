@@ -65,6 +65,7 @@ private:
     // hiding API that may be removed soon
     virtual std::string store(const std::shared_ptr<MetadataSchema>& spSchema);
     virtual std::string store(const std::shared_ptr<Metadata>& spMetadata);
+
 };
 
 }//vmf
