@@ -254,22 +254,18 @@ static std::shared_ptr<MetadataStream::VideoSegment> parseSegmentFromNode(xmlNod
 
 static void parseStatFromNode(xmlNodePtr statNode, MetadataStream& stream)
 {
-    std::string statName, updateModeStr;
+    std::string statName;
 
     for(xmlAttr* cur_prop = statNode->properties; cur_prop; cur_prop = cur_prop->next)
     {
         if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_NAME))
             statName = (char*)xmlGetProp(statNode, cur_prop->name);
-        else if(std::string((char*)cur_prop->name) == std::string(ATTR_STAT_UPDATE_MODE))
-            updateModeStr = (char*)xmlGetProp(statNode, cur_prop->name);
     }
 
     if(statName.empty())
         VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat name");
-    if(updateModeStr.empty())
-        VMF_EXCEPTION(vmf::InternalErrorException, "XML element has invalid stat update mode");
 
-    StatUpdateMode::Type updateMode = StatUpdateMode::fromString(updateModeStr);
+    const StatUpdateMode::Type updateMode = StatUpdateMode::Disabled;
 
     std::vector< StatField > fields;
 

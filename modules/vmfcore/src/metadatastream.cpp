@@ -848,10 +848,10 @@ void MetadataStream::convertFrameIndexToTimestamp(
 
 void MetadataStream::notifyStat(StatAction::Type action, std::shared_ptr< Metadata > spMetadata)
 {
-    std::for_each( m_stats.begin(), m_stats.end(), [&]( Stat* stat )
+    for( auto stat : m_stats )
     {
         stat->notify(action, spMetadata);
-    });
+    }
 }
 
 void MetadataStream::addStat(const std::string& name, const std::vector< StatField >& fields, StatUpdateMode::Type updateMode)
@@ -890,10 +890,10 @@ std::vector< std::string > MetadataStream::getAllStatNames() const
 {
     std::vector< std::string > names;
 
-    std::for_each(m_stats.begin(), m_stats.end(), [&]( const Stat* stat)
+    for( auto stat : m_stats )
     {
         names.push_back(stat->getName());
-    });
+    }
 
     return names;
 }

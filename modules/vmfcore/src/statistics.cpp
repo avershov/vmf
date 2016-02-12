@@ -531,6 +531,15 @@ StatField::StatField( const StatField& other )
 {
 }
 
+StatField::StatField( StatField&& other )
+    : m_desc( std::move( other.m_desc ))
+    , m_op( nullptr )
+    , m_state( std::move( other.m_state ))
+    , m_isActive( std::move( other.m_isActive ))
+{
+    std::swap( m_op, other.m_op );
+}
+
 StatField::StatField()
     : m_desc()
     , m_op( nullptr )
@@ -546,6 +555,8 @@ StatField::~StatField()
 
 StatField::StatFieldDesc& StatField::StatFieldDesc::operator=( const StatField::StatFieldDesc& other )
 {
+    setStream( nullptr );
+
     m_name         = other.m_name;
     m_schemaName   = other.m_schemaName;
     m_metadataName = other.m_metadataName;
@@ -554,7 +565,23 @@ StatField::StatFieldDesc& StatField::StatFieldDesc::operator=( const StatField::
     m_fieldDesc    = FieldDesc();
     m_opName       = other.m_opName;
 
+    setStream( other.getStream() );
+
+    return *this;
+}
+
+StatField::StatFieldDesc& StatField::StatFieldDesc::operator=( StatField::StatFieldDesc&& other )
+{
     setStream( nullptr );
+
+    m_name         = std::move( other.m_name );
+    m_schemaName   = std::move( other.m_schemaName );
+    m_metadataName = std::move( other.m_metadataName );
+    m_metadataDesc = std::move( other.m_metadataDesc );
+    m_fieldName    = std::move( other.m_fieldName );
+    m_fieldDesc    = std::move( other.m_fieldDesc );
+    m_opName       = std::move( other.m_opName );
+
     setStream( other.getStream() );
 
     return *this;
@@ -562,6 +589,8 @@ StatField::StatFieldDesc& StatField::StatFieldDesc::operator=( const StatField::
 
 StatField& StatField::operator=( const StatField& other )
 {
+    setStream( nullptr );
+
     m_desc = other.m_desc;
 
     delete m_op;
@@ -569,6 +598,26 @@ StatField& StatField::operator=( const StatField& other )
 
     m_state = other.m_state;
     m_isActive = other.m_isActive;
+
+    setStream( other.getStream() );
+
+    return *this;
+}
+
+StatField& StatField::operator=( StatField&& other )
+{
+    setStream( nullptr );
+
+    m_desc = std::move( other.m_desc );
+
+    delete m_op;
+    m_op = nullptr;
+    std::swap( m_op, other.m_op );
+
+    m_state = other.m_state;
+    m_isActive = other.m_isActive;
+
+    setStream( other.getStream() );
 
     return *this;
 }
@@ -656,18 +705,66 @@ Stat::Stat( const std::string& name, const std::vector< StatField >& fields, Sta
 {
 }
 
+Stat::Stat( const Stat& other )
+    : m_desc( other.m_desc )
+    , m_fields( other.m_fields )
+    , m_updateMode( other.m_updateMode )
+    , m_state( other.m_state )
+    , m_isActive( other.m_isActive )
+{
+}
+
+Stat::Stat( Stat&& other )
+    : m_desc( std::move( other.m_desc ))
+    , m_fields( std::move( other.m_fields ))
+    , m_updateMode( other.m_updateMode )
+    , m_state( other.m_state )
+    , m_isActive( other.m_isActive )
+{
+}
+
 Stat::~Stat()
 {
+}
+
+Stat& Stat::operator=( const Stat& other )
+{
+    setStream( nullptr );
+
+    m_desc       = other.m_desc;
+    m_fields     = other.m_fields;
+    m_updateMode = other.m_updateMode;
+    m_state      = other.m_state;
+    m_isActive   = other.m_isActive;
+
+    setStream( other.getStream() );
+
+    return *this;
+}
+
+Stat& Stat::operator=( Stat&& other )
+{
+    setStream( nullptr );
+
+    m_desc       = std::move( other.m_desc );
+    m_fields     = std::move( other.m_fields );
+    m_updateMode = std::move( other.m_updateMode );
+    m_state      = std::move( other.m_state );
+    m_isActive   = std::move( other.m_isActive );
+
+    setStream( other.getStream() );
+
+    return *this;
 }
 
 void Stat::notify( StatAction::Type action, std::shared_ptr< Metadata > metadata )
 {
     if( isActive() && (m_updateMode != StatUpdateMode::Disabled) )
     {
-        std::for_each( m_fields.begin(), m_fields.end(), [&]( StatField& statField )
+        for( auto& statField : m_fields )
         {
             updateState( statField.handle( action, metadata ));
-        });
+        }
     }
 }
 
@@ -675,10 +772,10 @@ void Stat::update( bool doRescan )
 {
     if( isActive() && (m_updateMode != StatUpdateMode::Disabled) && (getState() != StatState::UpToDate) )
     {
-        std::for_each( m_fields.begin(), m_fields.end(), [&]( StatField& statField )
+        for( auto& statField : m_fields )
         {
             statField.update( doRescan );
-        });
+        }
         m_state = StatState::UpToDate;
     }
 }
@@ -726,10 +823,10 @@ std::vector< std::string > Stat::getAllFieldNames() const
 {
     std::vector< std::string > names;
 
-    std::for_each( m_fields.begin(), m_fields.end(), [&]( const StatField& statField )
+    for( auto& statField : m_fields )
     {
         names.push_back( statField.getName() );
-    });
+    }
 
     return names;
 }
@@ -751,11 +848,16 @@ const StatField& Stat::getField( const std::string& name ) const
 
 void Stat::setStream( MetadataStream* pMetadataStream )
 {
-    std::for_each( m_fields.begin(), m_fields.end(), [&]( StatField& statField )
+    for( auto& statField : m_fields )
     {
         statField.setStream( pMetadataStream );
-    });
+    }
     m_isActive = bool( pMetadataStream != nullptr );
+}
+
+MetadataStream* Stat::getStream() const
+{
+    return (m_fields.empty() ? nullptr : m_fields[0].getStream());
 }
 
 } // namespace vmf

@@ -269,15 +269,12 @@ static std::shared_ptr<MetadataStream::VideoSegment> parseVideoSegmentFromNode(J
 static void parseStatFromNode(JSONNode& statNode, MetadataStream& stream)
 {
     auto statNameIter = statNode.find(ATTR_STAT_NAME);
-    auto updateModeIter = statNode.find(ATTR_STAT_UPDATE_MODE);
 
     if(statNameIter == statNode.end())
         VMF_EXCEPTION(vmf::InternalErrorException, "JSON element has no stat name");
-    if(updateModeIter == statNode.end())
-        VMF_EXCEPTION(vmf::InternalErrorException, "JSON element has no stat update mode");
 
     std::string statName = statNameIter->as_string();
-    StatUpdateMode::Type updateMode = StatUpdateMode::fromString(updateModeIter->as_string());
+    const StatUpdateMode::Type updateMode = StatUpdateMode::Disabled;
 
     if(statName.empty())
         VMF_EXCEPTION(vmf::InternalErrorException, "JSON element has invalid stat name");
@@ -371,10 +368,10 @@ bool JSONReader::parseSchemas(const std::string& text, std::vector<std::shared_p
     }
     else if( localRootNode.name() == TAG_SCHEMAS_ARRAY )
     {
-        for(auto node = localRootNode.begin(); node != localRootNode.end(); node++)
+        for(auto node : localRootNode)
         try
         {
-	    std::shared_ptr<MetadataSchema> spSchema = parseSchemaFromNode(*node);
+            std::shared_ptr<MetadataSchema> spSchema = parseSchemaFromNode(node);
             schemas.push_back(spSchema);
         }
         catch(Exception& e)
@@ -385,12 +382,12 @@ bool JSONReader::parseSchemas(const std::string& text, std::vector<std::shared_p
     }
     else if( localRootNode.name() == TAG_VMF )
     {
-        for(auto rootChildNode = localRootNode.begin(); rootChildNode != localRootNode.end(); rootChildNode++)
-            if(rootChildNode->name() == TAG_SCHEMAS_ARRAY )
-                for(auto node = rootChildNode->begin(); node != rootChildNode->end(); node++)
+        for(auto rootChildNode : localRootNode)
+            if(rootChildNode.name() == TAG_SCHEMAS_ARRAY )
+                for(auto node : rootChildNode)
                 try
                 {
-		    std::shared_ptr<MetadataSchema> spSchema = parseSchemaFromNode(*node);
+                    std::shared_ptr<MetadataSchema> spSchema = parseSchemaFromNode(node);
                     schemas.push_back(spSchema);
                 }
                 catch(Exception& e)
@@ -448,10 +445,10 @@ bool JSONReader::parseMetadata(const std::string& text,
     }
     else if( localRootNode.name() == TAG_METADATA_ARRAY )
     {
-        for(auto node = localRootNode.begin(); node != localRootNode.end(); node++)
+        for(auto node : localRootNode)
         try
         {
-            std::shared_ptr<MetadataInternal> spMetadata = parseMetadataFromNode(*node, schemas);
+            std::shared_ptr<MetadataInternal> spMetadata = parseMetadataFromNode(node, schemas);
             metadata.push_back(spMetadata);
         }
         catch(Exception& e)
@@ -462,12 +459,12 @@ bool JSONReader::parseMetadata(const std::string& text,
     }
     else if( localRootNode.name() == TAG_VMF )
     {
-        for(auto rootChildNode = localRootNode.begin(); rootChildNode != localRootNode.end(); rootChildNode++)
-            if(rootChildNode->name() == TAG_METADATA_ARRAY )
-                for(auto node = rootChildNode->begin(); node != rootChildNode->end(); node++)
+        for(auto rootChildNode : localRootNode)
+            if(rootChildNode.name() == TAG_METADATA_ARRAY )
+                for(auto node : rootChildNode)
                 try
                 {
-                    std::shared_ptr<MetadataInternal> spMetadata = parseMetadataFromNode(*node, schemas);
+                    std::shared_ptr<MetadataInternal> spMetadata = parseMetadataFromNode(node, schemas);
                     metadata.push_back(spMetadata);
                 }
                 catch(Exception& e)
@@ -526,7 +523,9 @@ bool JSONReader::parseAll(const std::string& text, IdType& nextId, std::string& 
         if(checksumIter != localRootNode.end() )
             checksum = checksumIter->as_string();
 
-	if(!parseVideoSegments(text, segments))
+        if(!parseStats(text, stream))
+            return false;
+        if(!parseVideoSegments(text, segments))
 	    return false;
         if(!parseSchemas(text, schemas))
             return false;
@@ -586,10 +585,10 @@ bool JSONReader::parseVideoSegments(const std::string& text, std::vector<std::sh
     }
     else if( localRootNode.name() == TAG_VIDEO_SEGMENTS_ARRAY )
     {
-	for(auto node = localRootNode.begin(); node != localRootNode.end(); node++)
+        for(auto node : localRootNode)
 	try
 	{
-	    std::shared_ptr<MetadataStream::VideoSegment> spSegment = parseVideoSegmentFromNode(*node);
+            std::shared_ptr<MetadataStream::VideoSegment> spSegment = parseVideoSegmentFromNode(node);
 	    segments.push_back(spSegment);
 	}
 	catch(Exception& e)
@@ -600,12 +599,12 @@ bool JSONReader::parseVideoSegments(const std::string& text, std::vector<std::sh
     }
     else if( localRootNode.name() == TAG_VMF )
     {
-	for(auto rootChildNode = localRootNode.begin(); rootChildNode != localRootNode.end(); rootChildNode++)
-	    if(rootChildNode->name() == TAG_VIDEO_SEGMENTS_ARRAY )
-		for(auto node = rootChildNode->begin(); node != rootChildNode->end(); node++)
+        for(auto rootChildNode : localRootNode)
+            if(rootChildNode.name() == TAG_VIDEO_SEGMENTS_ARRAY )
+                for(auto node : rootChildNode)
 		try
 		{
-		    std::shared_ptr<MetadataStream::VideoSegment> spSegment = parseVideoSegmentFromNode(*node);
+                    std::shared_ptr<MetadataStream::VideoSegment> spSegment = parseVideoSegmentFromNode(node);
 		    segments.push_back(spSegment);
 		}
 		catch(Exception& e)
@@ -658,10 +657,10 @@ bool JSONReader::parseStats(const std::string& text, MetadataStream& stream)
     }
     else if( localRootNode.name() == TAG_STATS_ARRAY )
     {
-        for(auto node = localRootNode.begin(); node != localRootNode.end(); node++)
+        for(auto node : localRootNode)
         try
         {
-            parseStatFromNode(*node, stream);
+            parseStatFromNode(node, stream);
         }
         catch(Exception& e)
         {
@@ -671,12 +670,12 @@ bool JSONReader::parseStats(const std::string& text, MetadataStream& stream)
     }
     else if( localRootNode.name() == TAG_VMF )
     {
-        for(auto rootChildNode = localRootNode.begin(); rootChildNode != localRootNode.end(); rootChildNode++)
-            if(rootChildNode->name() == TAG_STATS_ARRAY )
-                for(auto node = rootChildNode->begin(); node != rootChildNode->end(); node++)
+        for(auto rootChildNode : localRootNode)
+            if(rootChildNode.name() == TAG_STATS_ARRAY )
+                for(auto node : rootChildNode)
                 try
                 {
-                    parseStatFromNode(*node, stream);
+                    parseStatFromNode(node, stream);
                 }
                 catch(Exception& e)
                 {
