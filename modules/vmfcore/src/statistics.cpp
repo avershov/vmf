@@ -71,8 +71,8 @@ public:
         {}
 
 public:
-    virtual const std::string& getName() const
-        { return className; }
+    virtual const std::string& name() const
+        { return opName(); }
     virtual void reset()
         { m_value = Variant(); }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
@@ -117,7 +117,7 @@ public:
             }
             return true;
         }
-    virtual const Variant& getValue() const
+    virtual const Variant& value() const
         { return m_value; }
 
 private:
@@ -126,7 +126,11 @@ private:
 public:
     static IStatOp* createInstance()
         { return new StatOpMin(); }
-    static const std::string className;
+    static const std::string& opName()
+        {
+            static const std::string name( BUILTIN_OP_NAME_MIN );
+            return name;
+        }
 };
 
 class StatOpMax: public IStatOp
@@ -138,8 +142,8 @@ public:
         {}
 
 public:
-    virtual const std::string& getName() const
-        { return className; }
+    virtual const std::string& name() const
+        { return opName(); }
     virtual void reset()
         { m_value = Variant(); }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
@@ -184,7 +188,7 @@ public:
             }
             return true;
         }
-    virtual const Variant& getValue() const
+    virtual const Variant& value() const
         { return m_value; }
 
 private:
@@ -193,7 +197,11 @@ private:
 public:
     static IStatOp* createInstance()
         { return new StatOpMax(); }
-    static const std::string className;
+    static const std::string& opName()
+        {
+            static const std::string name( BUILTIN_OP_NAME_MAX );
+            return name;
+        }
 };
 
 class StatOpAverage: public IStatOp
@@ -205,8 +213,8 @@ public:
         {}
 
 public:
-    virtual const std::string& getName() const
-        { return className; }
+    virtual const std::string& name() const
+        { return opName(); }
     virtual void reset()
         { m_count = 0; m_value = Variant(); }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
@@ -251,7 +259,7 @@ public:
             }
             return true;
         }
-    virtual const Variant& getValue() const
+    virtual const Variant& value() const
         {
             switch( m_value.getType() )
             {
@@ -277,7 +285,11 @@ private:
 public:
     static IStatOp* createInstance()
         { return new StatOpAverage(); }
-    static const std::string className;
+    static const std::string& opName()
+        {
+            static const std::string name( BUILTIN_OP_NAME_AVERAGE );
+            return name;
+        }
 };
 
 class StatOpCount: public IStatOp
@@ -289,8 +301,8 @@ public:
         {}
 
 public:
-    virtual const std::string& getName() const
-        { return className; }
+    virtual const std::string& name() const
+        { return opName(); }
     virtual void reset()
         { m_count = 0; }
     virtual bool handle( StatAction::Type action, const Variant& /*inputValue*/ )
@@ -308,7 +320,7 @@ public:
             }
             return true;
         }
-    virtual const Variant& getValue() const
+    virtual const Variant& value() const
         { m_temp = Variant( (vmf_integer)m_count ); return m_temp; }
 
 private:
@@ -318,7 +330,11 @@ private:
 public:
     static IStatOp* createInstance()
         { return new StatOpCount(); }
-    static const std::string className;
+    static const std::string& opName()
+        {
+            static const std::string name( BUILTIN_OP_NAME_COUNT );
+            return name;
+        }
 };
 
 class StatOpSum: public IStatOp
@@ -330,8 +346,8 @@ public:
         {}
 
 public:
-    virtual const std::string& getName() const
-        { return className; }
+    virtual const std::string& name() const
+        { return opName(); }
     virtual void reset()
         { m_value = Variant(); }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
@@ -376,7 +392,7 @@ public:
             }
             return true;
         }
-    virtual const Variant& getValue() const
+    virtual const Variant& value() const
         { return m_value; }
 
 private:
@@ -385,7 +401,11 @@ private:
 public:
     static IStatOp* createInstance()
         { return new StatOpSum(); }
-    static const std::string className;
+    static const std::string& opName()
+        {
+            static const std::string name( BUILTIN_OP_NAME_SUM );
+            return name;
+        }
 };
 
 class StatOpLast: public IStatOp
@@ -397,8 +417,8 @@ public:
         {}
 
 public:
-    virtual const std::string& getName() const
-        { return className; }
+    virtual const std::string& name() const
+        { return opName(); }
     virtual void reset()
         { m_value = Variant(); }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
@@ -413,7 +433,7 @@ public:
             }
             return true;
         }
-    virtual const Variant& getValue() const
+    virtual const Variant& value() const
         { return m_value; }
 
 private:
@@ -422,15 +442,12 @@ private:
 public:
     static IStatOp* createInstance()
         { return new StatOpLast(); }
-    static const std::string className;
+    static const std::string& opName()
+        {
+            static const std::string name( BUILTIN_OP_NAME_LAST );
+            return name;
+        }
 };
-
-const std::string StatOpMin    ::className = BUILTIN_OP_NAME_MIN;
-const std::string StatOpMax    ::className = BUILTIN_OP_NAME_MAX;
-const std::string StatOpAverage::className = BUILTIN_OP_NAME_AVERAGE;
-const std::string StatOpCount  ::className = BUILTIN_OP_NAME_COUNT;
-const std::string StatOpSum    ::className = BUILTIN_OP_NAME_SUM;
-const std::string StatOpLast   ::className = BUILTIN_OP_NAME_LAST;
 
 // class StatOpFactory
 
@@ -501,12 +518,12 @@ StatOpFactory::UserOpMap& StatOpFactory::getClassMap()
     return ops;
 }
 
-const std::string& StatOpFactory::minName()     { static const std::string name( BUILTIN_OP_NAME_MIN     ); return name; }
-const std::string& StatOpFactory::maxName()     { static const std::string name( BUILTIN_OP_NAME_MAX     ); return name; }
-const std::string& StatOpFactory::averageName() { static const std::string name( BUILTIN_OP_NAME_AVERAGE ); return name; }
-const std::string& StatOpFactory::countName()   { static const std::string name( BUILTIN_OP_NAME_COUNT   ); return name; }
-const std::string& StatOpFactory::sumName()     { static const std::string name( BUILTIN_OP_NAME_SUM     ); return name; }
-const std::string& StatOpFactory::lastName()    { static const std::string name( BUILTIN_OP_NAME_LAST    ); return name; }
+const std::string& StatOpFactory::minName()     { return StatOpMin::opName();     }
+const std::string& StatOpFactory::maxName()     { return StatOpMax::opName();     }
+const std::string& StatOpFactory::averageName() { return StatOpAverage::opName(); }
+const std::string& StatOpFactory::countName()   { return StatOpCount::opName();   }
+const std::string& StatOpFactory::sumName()     { return StatOpSum::opName();     }
+const std::string& StatOpFactory::lastName()    { return StatOpLast::opName();    }
 
 // class StatField (StatFieldDesc)
 
@@ -525,7 +542,7 @@ StatField::StatField(
 
 StatField::StatField( const StatField& other )
     : m_desc( other.m_desc )
-    , m_op( (other.m_op != nullptr) ? StatOpFactory::create( other.m_op->getName() ) : nullptr )
+    , m_op( (other.m_op != nullptr) ? StatOpFactory::create( other.m_op->name() ) : nullptr )
     , m_state( other.m_state )
     , m_isActive( other.m_isActive )
 {
@@ -594,7 +611,7 @@ StatField& StatField::operator=( const StatField& other )
     m_desc = other.m_desc;
 
     delete m_op;
-    m_op = (other.m_op != nullptr) ? StatOpFactory::create( other.m_op->getName() ) : nullptr;
+    m_op = (other.m_op != nullptr) ? StatOpFactory::create( other.m_op->name() ) : nullptr;
 
     m_state = other.m_state;
     m_isActive = other.m_isActive;

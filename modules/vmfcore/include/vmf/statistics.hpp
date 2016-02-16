@@ -57,10 +57,10 @@ public:
     virtual ~IStatOp() {}
 
 public:
-    virtual const std::string& getName() const = 0;
+    virtual const std::string& name() const = 0;
     virtual void reset() = 0;
     virtual bool handle( StatAction::Type action, const Variant& inputValue ) = 0;
-    virtual const Variant& getValue() const = 0;
+    virtual const Variant& value() const = 0;
 };
 
 class VMF_EXPORT StatOpFactory
@@ -75,13 +75,13 @@ public:
     static IStatOp* create( const std::string& name );
     static void registerUserOp( const std::string& name, InstanceCreator createInstance );
 
-    // required: UserOp::className & UserOp::createInstance members
+    // required: UserOp::opName() & UserOp::createInstance() static members
     template< class UserOp >
     inline static void registerUserOp()
         {
             static_assert( std::is_base_of< IStatOp, UserOp >::value,
                            "User operation must implement IStatOp interface" );
-            registerUserOp( UserOp::className, UserOp::createInstance );
+            registerUserOp( UserOp::opName(), UserOp::createInstance );
         }
 
     static const std::string& minName();
@@ -171,7 +171,7 @@ public:
     void update( bool doRescan = false );
     StatState::Type handle( StatAction::Type action, std::shared_ptr< Metadata > metadata );
 
-    const Variant& getValue() const { return m_op->getValue(); }
+    const Variant& getValue() const { return m_op->value(); }
 
 private:
     void setStream( MetadataStream* pMetadataStream );
