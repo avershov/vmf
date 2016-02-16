@@ -186,20 +186,20 @@ static void add(xmlNodePtr segmentsNode, const std::shared_ptr<MetadataStream::V
     }
 }
 
-static void add(xmlNodePtr statNode, const Stat* stat)
+static void add(xmlNodePtr statNode, const Stat& stat)
 {
-    if (stat->getName().empty())
+    if (stat.getName().empty())
         VMF_EXCEPTION(IncorrectParamException, "Invalid stat object: name is invalid!");
 
-    if(xmlNewProp(statNode, BAD_CAST ATTR_STAT_NAME, BAD_CAST stat->getName().c_str()) == NULL)
+    if(xmlNewProp(statNode, BAD_CAST ATTR_STAT_NAME, BAD_CAST stat.getName().c_str()) == NULL)
         VMF_EXCEPTION(vmf::InternalErrorException, "Can't create xmlNode property (stat object name)");
 
-    std::vector< std::string > fieldNames = stat->getAllFieldNames();
+    std::vector< std::string > fieldNames = stat.getAllFieldNames();
     if (!fieldNames.empty())
     {
         for(auto fieldName : fieldNames)
         {
-            const StatField& field = stat->getField(fieldName);
+            const StatField& field = stat.getField(fieldName);
 
             if (field.getName().empty())
                 VMF_EXCEPTION(IncorrectParamException, "Invalid stat object: field name is invalid!");
@@ -383,7 +383,7 @@ std::string XMLWriter::store(const IdType& nextId,
     const std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments,
     const std::vector<std::shared_ptr<MetadataSchema>>& schemas,
     const MetadataSet& set,
-    const std::vector< Stat* >& stats)
+    const std::vector< Stat >& stats)
 {
     if(schemas.empty())
         VMF_EXCEPTION(vmf::IncorrectParamException, "Input schemas vector is empty");
@@ -430,6 +430,14 @@ std::string XMLWriter::store(const IdType& nextId,
     if(metadataArrayNode == NULL)
         VMF_EXCEPTION(vmf::InternalErrorException, "Can't create xmlNode for metadata array");
 
+    xmlNodePtr statsArrayNode = NULL;
+    if(!stats.empty())
+    {
+        statsArrayNode = xmlNewNode(NULL, BAD_CAST TAG_STATS_ARRAY);
+        if(statsArrayNode == NULL)
+            VMF_EXCEPTION(vmf::InternalErrorException, "Can't create xmlNode for stat object array");
+    }
+
     for(auto spSegment : segments)
     {
 	if( spSegment == nullptr )
@@ -452,6 +460,12 @@ std::string XMLWriter::store(const IdType& nextId,
             VMF_EXCEPTION(vmf::IncorrectParamException, "Metadata pointer is null");
         xmlNodePtr metadataNode = xmlNewChild(metadataArrayNode, NULL, BAD_CAST TAG_METADATA, NULL);
         add(metadataNode, spMetadata);
+    }
+
+    for(auto& stat : stats)
+    {
+        xmlNodePtr statNode = xmlNewChild(statsArrayNode, NULL, BAD_CAST TAG_STAT, NULL);
+        add(statNode, stat);
     }
 
     xmlChar *buf;
@@ -539,11 +553,8 @@ std::string XMLWriter::store(const std::vector<std::shared_ptr<MetadataStream::V
     return outputString;
 }
 
-std::string XMLWriter::store(const Stat* stat)
+std::string XMLWriter::store(const Stat& stat)
 {
-    if( stat == nullptr )
-        VMF_EXCEPTION(vmf::IncorrectParamException, "Stat object pointer is null");
-
     xmlDocPtr doc = xmlNewDoc(NULL);
     xmlNodePtr statNode = xmlNewNode(NULL, BAD_CAST TAG_STAT);
     if(statNode == NULL)
@@ -570,7 +581,7 @@ std::string XMLWriter::store(const Stat* stat)
     return outputString;
 }
 
-std::string XMLWriter::store(const std::vector< Stat* >& stats)
+std::string XMLWriter::store(const std::vector< Stat >& stats)
 {
     if(stats.empty())
         VMF_EXCEPTION(vmf::IncorrectParamException, "Input stat object vector is empty");
@@ -583,11 +594,8 @@ std::string XMLWriter::store(const std::vector< Stat* >& stats)
     if(xmlDocSetRootElement(doc, statsArrayNode) != 0)
         VMF_EXCEPTION(vmf::InternalErrorException, "Can't set root element to the document");
 
-    for(auto stat : stats)
+    for(auto& stat : stats)
     {
-        if( stat == nullptr )
-            VMF_EXCEPTION(vmf::IncorrectParamException, "Stat object pointer is null");
-
         xmlNodePtr statNode = xmlNewChild(statsArrayNode, NULL, BAD_CAST TAG_STAT, NULL);
 
         add(statNode, stat);

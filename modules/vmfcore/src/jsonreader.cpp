@@ -266,7 +266,7 @@ static std::shared_ptr<MetadataStream::VideoSegment> parseVideoSegmentFromNode(J
 
 }
 
-static void parseStatFromNode(JSONNode& statNode, MetadataStream& stream)
+static void parseStatFromNode(JSONNode& statNode, std::vector< Stat >& stats)
 {
     auto statNameIter = statNode.find(ATTR_STAT_NAME);
 
@@ -318,7 +318,7 @@ static void parseStatFromNode(JSONNode& statNode, MetadataStream& stream)
         }
     }
 
-    stream.addStat(statName, fields, updateMode);
+    stats.emplace_back(statName, fields, updateMode);
 }
 
 JSONReader::JSONReader(){}
@@ -481,7 +481,7 @@ bool JSONReader::parseAll(const std::string& text, IdType& nextId, std::string& 
     std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments,
     std::vector<std::shared_ptr<MetadataSchema>>& schemas,
     std::vector<std::shared_ptr<MetadataInternal>>& metadata,
-    MetadataStream& stream)
+    std::vector< Stat >& stats)
 {
     if(text.empty())
     {
@@ -523,7 +523,7 @@ bool JSONReader::parseAll(const std::string& text, IdType& nextId, std::string& 
         if(checksumIter != localRootNode.end() )
             checksum = checksumIter->as_string();
 
-        if(!parseStats(text, stream))
+        if(!parseStats(text, stats))
             return false;
         if(!parseVideoSegments(text, segments))
 	    return false;
@@ -616,7 +616,7 @@ bool JSONReader::parseVideoSegments(const std::string& text, std::vector<std::sh
     return true;
 }
 
-bool JSONReader::parseStats(const std::string& text, MetadataStream& stream)
+bool JSONReader::parseStats(const std::string& text, std::vector< Stat >& stats)
 {
     if(text.empty())
     {
@@ -647,7 +647,7 @@ bool JSONReader::parseStats(const std::string& text, MetadataStream& stream)
     {
         try
         {
-            parseStatFromNode(localRootNode, stream);
+            parseStatFromNode(localRootNode, stats);
         }
         catch(Exception& e)
         {
@@ -660,7 +660,7 @@ bool JSONReader::parseStats(const std::string& text, MetadataStream& stream)
         for(auto node : localRootNode)
         try
         {
-            parseStatFromNode(node, stream);
+            parseStatFromNode(node, stats);
         }
         catch(Exception& e)
         {
@@ -675,7 +675,7 @@ bool JSONReader::parseStats(const std::string& text, MetadataStream& stream)
                 for(auto node : rootChildNode)
                 try
                 {
-                    parseStatFromNode(node, stream);
+                    parseStatFromNode(node, stats);
                 }
                 catch(Exception& e)
                 {

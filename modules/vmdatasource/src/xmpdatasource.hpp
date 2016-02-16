@@ -68,10 +68,6 @@ public:
 
     virtual void load(std::map<MetaString, std::shared_ptr<vmf::MetadataSchema> >& schemas);
 
-    virtual void saveStats(const std::vector< Stat* >& stats);
-
-    virtual void loadStats(MetadataStream& stream);
-
     virtual void clear();
 
     virtual void save(const vmf::IdType& id);
@@ -89,6 +85,10 @@ public:
     virtual void saveVideoSegments(const std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments);
 
     virtual void loadVideoSegments(std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments);
+
+    virtual void saveStats(const std::vector< Stat >& stats);
+
+    virtual void loadStats(std::vector< Stat >& stats);
 
     /*!
      * \brief Initializes XMPDataSource class dependecies

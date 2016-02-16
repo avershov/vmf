@@ -44,7 +44,7 @@ XMPStatSource::~XMPStatSource()
 {
 }
 
-void XMPStatSource::save(const std::vector< Stat* >& stats)
+void XMPStatSource::save(const std::vector< Stat >& stats)
 {
     metadata->DeleteProperty(VMF_NS, VMF_STATISTICS);
 
@@ -53,7 +53,7 @@ void XMPStatSource::save(const std::vector< Stat* >& stats)
     SXMPUtils::ComposeArrayItemPath(VMF_NS, VMF_STATISTICS, kXMP_ArrayLastItem, &pathToStatData);
     metadata->SetStructField(VMF_NS, pathToStatData.c_str(), VMF_NS, VMF_STAT, nullptr, kXMP_PropValueIsArray);
 
-    for( auto stat : stats )
+    for( auto& stat : stats )
     {
         MetaString pathToStatArray;
         SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToStatData.c_str(), VMF_NS, VMF_STAT, &pathToStatArray);
@@ -63,16 +63,16 @@ void XMPStatSource::save(const std::vector< Stat* >& stats)
 
         MetaString tmpPath;
 
-        if (stat->getName().empty())
+        if (stat.getName().empty())
             VMF_EXCEPTION(DataStorageException, "Invalid stat object: name is invalid!");
 
         SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToStat.c_str(), VMF_NS, VMF_STAT_NAME, &tmpPath);
-        metadata->SetProperty(VMF_NS, tmpPath.c_str(), stat->getName().c_str());
+        metadata->SetProperty(VMF_NS, tmpPath.c_str(), stat.getName().c_str());
 
-        std::vector< std::string > fieldNames = stat->getAllFieldNames();
+        std::vector< std::string > fieldNames = stat.getAllFieldNames();
         for( auto fieldName : fieldNames )
         {
-            const StatField& field = stat->getField(fieldName);
+            const StatField& field = stat.getField(fieldName);
 
             MetaString pathToFieldArray;
             SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToStat.c_str(), VMF_NS, VMF_STAT_FIELD, &pathToFieldArray);
@@ -113,7 +113,7 @@ void XMPStatSource::save(const std::vector< Stat* >& stats)
     }
 }
 
-void XMPStatSource::load(MetadataStream& stream)
+void XMPStatSource::load(std::vector< Stat >& stats)
 {
     MetaString pathToStatData;
     SXMPUtils::ComposeArrayItemPath(VMF_NS, VMF_STATISTICS, kXMP_ArrayLastItem, &pathToStatData);
@@ -166,7 +166,7 @@ void XMPStatSource::load(MetadataStream& stream)
             fields.push_back(StatField(fieldName, schemaName, metadataName, metadataFieldName, opName));
         }
 
-        stream.addStat(statName, fields, updateMode);
+        stats.emplace_back(statName, fields, updateMode);
     }
 }
 

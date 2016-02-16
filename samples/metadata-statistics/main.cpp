@@ -94,30 +94,30 @@ static void dumpStatistics( const vmf::MetadataStream& mdStream )
     std::vector< std::string > statNames = mdStream.getAllStatNames();
     if( !statNames.empty() )
     {
-        std::for_each( statNames.begin(), statNames.end(), [&]( const std::string& statName )
+        for( auto& statName : statNames )
         {
-            const vmf::Stat* stat = mdStream.getStat( statName );
-            std::cout << "statistics: '" << stat->getName() << "'" << std::endl;
+            const vmf::Stat& stat = mdStream.getStat( statName );
+            std::cout << "statistics: '" << stat.getName() << "'" << std::endl;
 
-            std::vector< std::string > fieldNames = stat->getAllFieldNames();
+            std::vector< std::string > fieldNames = stat.getAllFieldNames();
             if( !fieldNames.empty() )
             {
-                std::for_each( fieldNames.begin(), fieldNames.end(), [&]( const std::string& fieldName )
+                for( auto& fieldName : fieldNames )
                 {
-                    const vmf::StatField& field = stat->getField( fieldName );
+                    const vmf::StatField& field = stat.getField( fieldName );
 
                     std::cout << "  name='" << field.getName()
                               << "'  metadata='" << field.getMetadataDesc()->getMetadataName()
                               << "'  field='" << field.getFieldName()
                               << "'  value=" << field.getValue()
                               << std::endl;
-                });
+                }
             }
             else
             {
                 std::cout << "  no field(s) defined" << std::endl;
             }
-        });
+        }
     }
     else
     {

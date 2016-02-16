@@ -169,14 +169,14 @@ static void add(JSONNode& segmentsNode, const std::shared_ptr<MetadataStream::Vi
     }
 }
 
-static void add(JSONNode& statNode, const Stat* stat)
+static void add(JSONNode& statNode, const Stat& stat)
 {
-    if (stat->getName().empty())
+    if (stat.getName().empty())
         VMF_EXCEPTION(IncorrectParamException, "Invalid stat object: name is invalid!");
 
-    statNode.push_back(JSONNode(ATTR_STAT_NAME, stat->getName()));
+    statNode.push_back(JSONNode(ATTR_STAT_NAME, stat.getName()));
 
-    std::vector< std::string > fieldNames = stat->getAllFieldNames();
+    std::vector< std::string > fieldNames = stat.getAllFieldNames();
     if (!fieldNames.empty())
     {
         JSONNode fieldsArrayNode(JSON_ARRAY);
@@ -184,7 +184,7 @@ static void add(JSONNode& statNode, const Stat* stat)
 
         for(auto& fieldName : fieldNames)
         {
-            const StatField& field = stat->getField(fieldName);
+            const StatField& field = stat.getField(fieldName);
 
             if (field.getName().empty())
                 VMF_EXCEPTION(IncorrectParamException, "Invalid stat object: field name is invalid!");
@@ -304,7 +304,7 @@ std::string JSONWriter::store(const IdType& nextId,
     const std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments,
     const std::vector<std::shared_ptr<MetadataSchema>>& schemas,
     const MetadataSet& set,
-    const std::vector< Stat* >& stats)
+    const std::vector< Stat >& stats)
 {
     if(schemas.empty())
         VMF_EXCEPTION(vmf::IncorrectParamException, "Input schemas vector is empty");
@@ -350,10 +350,8 @@ std::string JSONWriter::store(const IdType& nextId,
         JSONNode statsArrayNode(JSON_ARRAY);
         statsArrayNode.set_name(TAG_STATS_ARRAY);
 
-        for(auto stat : stats)
+        for(auto& stat : stats)
         {
-            if( stat == nullptr )
-                VMF_EXCEPTION(vmf::IncorrectParamException, "Stat object pointer is null");
             JSONNode statNode(JSON_NODE);
             add(statNode, stat);
             statsArrayNode.push_back(statNode);
@@ -435,7 +433,7 @@ std::string JSONWriter::store(const std::vector<std::shared_ptr<MetadataStream::
     return root.write_formatted();
 }
 
-std::string JSONWriter::store(const std::vector< Stat* >& stats)
+std::string JSONWriter::store(const std::vector< Stat >& stats)
 {
     if(stats.empty())
         VMF_EXCEPTION(vmf::IncorrectParamException, "Input stat object vector is empty");
@@ -443,10 +441,8 @@ std::string JSONWriter::store(const std::vector< Stat* >& stats)
     JSONNode statsArrayNode(JSON_ARRAY);
     statsArrayNode.set_name(TAG_STATS_ARRAY);
 
-    for(auto stat : stats)
+    for(auto& stat : stats)
     {
-        if( stat == nullptr )
-            VMF_EXCEPTION(vmf::IncorrectParamException, "Stat object pointer is null");
         JSONNode statNode(JSON_NODE);
         add(statNode, stat);
         statsArrayNode.push_back(statNode);
@@ -458,11 +454,8 @@ std::string JSONWriter::store(const std::vector< Stat* >& stats)
     return root.write_formatted();
 }
 
-std::string JSONWriter::store(const Stat* stat)
+std::string JSONWriter::store(const Stat& stat)
 {
-    if( stat == nullptr )
-        VMF_EXCEPTION(vmf::IncorrectParamException, "Stat object pointer is null");
-
     JSONNode statNode(JSON_NODE);
     statNode.set_name(TAG_STAT);
 

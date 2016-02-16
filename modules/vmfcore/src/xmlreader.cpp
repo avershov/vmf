@@ -252,7 +252,7 @@ static std::shared_ptr<MetadataStream::VideoSegment> parseSegmentFromNode(xmlNod
     return spSegment;
 }
 
-static void parseStatFromNode(xmlNodePtr statNode, MetadataStream& stream)
+static void parseStatFromNode(xmlNodePtr statNode, std::vector< Stat >& stats)
 {
     std::string statName;
 
@@ -304,7 +304,7 @@ static void parseStatFromNode(xmlNodePtr statNode, MetadataStream& stream)
         }
     }
 
-    stream.addStat(statName, fields, updateMode);
+    stats.emplace_back(statName, fields, updateMode);
 }
 
 XMLReader::XMLReader(){}
@@ -495,7 +495,7 @@ bool XMLReader::parseAll(const std::string& text, IdType& nextId, std::string& f
     std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments,
     std::vector<std::shared_ptr<MetadataSchema>>& schemas,
     std::vector<std::shared_ptr<MetadataInternal>>& metadata,
-    MetadataStream& stream)
+    std::vector< Stat >& stats)
 {
     if(text.empty())
     {
@@ -650,7 +650,7 @@ bool XMLReader::parseVideoSegments(const std::string& text, std::vector<std::sha
     return true;
 }
 
-bool XMLReader::parseStats(const std::string& text, MetadataStream& stream)
+bool XMLReader::parseStats(const std::string& text, std::vector< Stat >& stats)
 {
     if(text.empty())
     {
@@ -684,7 +684,7 @@ bool XMLReader::parseStats(const std::string& text, MetadataStream& stream)
     {
         try
         {
-            parseStatFromNode(root, stream);
+            parseStatFromNode(root, stats);
         }
         catch(Exception& e)
         {
@@ -699,7 +699,7 @@ bool XMLReader::parseStats(const std::string& text, MetadataStream& stream)
             {
                 try
                 {
-                    parseStatFromNode(node, stream);
+                    parseStatFromNode(node, stats);
                 }
                 catch(Exception& e)
                 {
@@ -717,7 +717,7 @@ bool XMLReader::parseStats(const std::string& text, MetadataStream& stream)
                     {
                         try
                         {
-                            parseStatFromNode(node, stream);
+                            parseStatFromNode(node, stats);
                         }
                         catch(Exception& e)
                         {
