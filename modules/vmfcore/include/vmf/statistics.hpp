@@ -26,9 +26,16 @@
 #include "variant.hpp"
 #include "global.hpp"
 #include "metadatadesc.hpp"
+
 #include <map>
 #include <memory>
 #include <string>
+
+#include <atomic>
+#include <condition_variable>
+#include <queue>
+#include <thread>
+
 
 namespace vmf
 {
@@ -189,6 +196,7 @@ private:
 class VMF_EXPORT Stat
 {
     friend class MetadataStream; // setStream()
+    friend class StatWorker;     // handleMetadata()
 
 private:
     class StatDesc
@@ -206,6 +214,100 @@ private:
 
     private:
         std::string m_name;
+    };
+
+private:
+    class StatWorker
+    {
+    public:
+        explicit StatWorker( Stat* stat )
+            : m_stat( stat )
+            , m_worker( &StatWorker::operator(), this )
+            , m_workScheduled( false )
+            , m_exitScheduled( false )
+            , m_exitImmediate( false )
+            {}
+        ~StatWorker()
+            {
+                scheduleExit();
+                m_worker.join();
+                m_stat = nullptr;
+            }
+        void operator()()
+            {
+                // worker is starting
+                for(;;)
+                {
+                    // worker is going to sleep
+                    {
+                        std::unique_lock< std::mutex > lock( m_lock );
+                        m_signal.wait( lock, [&]{ return m_exitScheduled || (m_workScheduled && !m_items.empty()); });
+                        if( m_exitScheduled && m_exitImmediate )
+                            break;
+                    }
+                    // worker has awaken
+                    std::shared_ptr< Metadata > val;
+                    while( tryPop( val ))
+                    {
+                        // processing of item
+                    }
+                    {
+                        std::unique_lock< std::mutex > lock( m_lock );
+                        if( m_exitScheduled && !m_exitImmediate )
+                            break;
+                    }
+                }
+                // worker is finishing
+            }
+        void scheduleWork( const std::shared_ptr< Metadata > val, bool doWake = true )
+            {
+                std::unique_lock< std::mutex > lock( m_lock );
+                m_items.push( val );
+                if( doWake && !m_workScheduled && !m_items.empty() )
+                {
+                    m_workScheduled = true;
+                    m_signal.notify_one();
+                }
+            }
+        void scheduleExit( bool doImmediate = false )
+            {
+                std::unique_lock< std::mutex > lock( m_lock );
+                if( !m_exitScheduled )
+                {
+                    m_exitScheduled = true;
+                    m_exitImmediate = doImmediate;
+                    m_signal.notify_one();
+                }
+            }
+        void wakeup()
+            {
+                std::unique_lock< std::mutex > lock( m_lock );
+                if( m_exitScheduled || (m_workScheduled && !m_items.empty()) )
+                {
+                    m_signal.notify_one();
+                }
+            }
+    private:
+        bool tryPop( std::shared_ptr< Metadata >& val )
+            {
+                std::unique_lock< std::mutex > lock( m_lock );
+                if( !m_items.empty() ) {
+                    val = m_items.front();
+                    m_items.pop();
+                    return true;
+                }
+                m_workScheduled = false;
+                return false;
+            }
+    private:
+        Stat* m_stat;
+        std::thread m_worker;
+        std::queue< std::shared_ptr< Metadata >> m_items;
+        std::atomic< bool > m_workScheduled;
+        std::atomic< bool > m_exitScheduled;
+        std::atomic< bool > m_exitImmediate;
+        std::condition_variable m_signal;
+        std::mutex m_lock;
     };
 
 public:
@@ -236,6 +338,8 @@ private:
 
     bool isActive() const { return m_isActive; }
     void updateState( StatState::Type state );
+
+    void handleMetadata( StatAction::Type action, const std::shared_ptr< Metadata > metadata );
 
     StatDesc m_desc;
     std::vector< StatField > m_fields;
