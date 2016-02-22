@@ -23,6 +23,8 @@
 #pragma warning(disable: 4251)
 #endif
 
+#include <vmf/logger.hpp>
+
 #include "variant.hpp"
 #include "global.hpp"
 #include "metadatadesc.hpp"
@@ -176,7 +178,7 @@ public:
     StatState::Type getState() const { return m_state; }
 
     void update( bool doRescan = false );
-    StatState::Type handle( StatAction::Type action, std::shared_ptr< Metadata > metadata );
+    StatState::Type handle( std::shared_ptr< Metadata > metadata );
 
     const Variant& getValue() const { return m_op->value(); }
 
@@ -196,7 +198,7 @@ private:
 class VMF_EXPORT Stat
 {
     friend class MetadataStream; // setStream()
-    friend class StatWorker;     // handleMetadata()
+    friend class StatWorker;     // handle()
 
 private:
     class StatDesc
@@ -223,7 +225,8 @@ private:
         explicit StatWorker( Stat* stat )
             : m_stat( stat )
             , m_worker( &StatWorker::operator(), this )
-            , m_workScheduled( false )
+            , m_updateScheduled( false )
+            , m_rescanScheduled( false )
             , m_exitScheduled( false )
             , m_exitImmediate( false )
             {}
@@ -235,40 +238,100 @@ private:
             }
         void operator()()
             {
+                vmf::Logger<int>& logger = vmf::getLogger<int>();
                 // worker is starting
+                logger.writeln( "***   [worker] is starting" );
                 for(;;)
                 {
                     // worker is going to sleep
+                    logger.writeln( "***   [worker] is going to sleep" );
                     {
                         std::unique_lock< std::mutex > lock( m_lock );
-                        m_signal.wait( lock, [&]{ return m_exitScheduled || (m_workScheduled && !m_items.empty()); });
+                        m_signal.wait( lock, [&]
+                        {
+                            return m_exitScheduled ||
+                                   m_rescanScheduled ||
+                                   (m_updateScheduled && !m_items.empty());
+                        });
                         if( m_exitScheduled && m_exitImmediate )
+                        {
+                            logger.writeln( "***   [worker] is immediately exiting" );
                             break;
+                        }
                     }
                     // worker has awaken
-                    std::shared_ptr< Metadata > val;
-                    while( tryPop( val ))
+                    logger.writeln( "***   [worker] has awaken" );
+                    if( m_rescanScheduled )
                     {
-                        // processing of item
+                        // rescan
+                        logger.writeln( "***   [worker] is rescanning" );
+                        if( m_stat != nullptr )
+                            m_stat->rescan();
+                        {
+                            std::unique_lock< std::mutex > lock( m_lock );
+                            m_rescanScheduled = false;
+                        }
+                        logger.writeln( "***   [worker] has finished rescanning" );
+                    }
+                    else if( m_updateScheduled )
+                    {
+                        logger.writeln( "***   [worker] is updating" );
+                        std::shared_ptr< Metadata > metadata;
+                        while( tryPop( metadata ))
+                        {
+                            // processing of item
+                            logger.writeln( "***   [worker] processing of item" );
+                            if( m_stat != nullptr )
+                                m_stat->handle( metadata );
+                        }
+                        {
+                            std::unique_lock< std::mutex > lock( m_lock );
+                            m_updateScheduled = false;
+                        }
+                        if( m_stat != nullptr )
+                            m_stat->resetState();
+                        logger.writeln( "***   [worker] has finished updating" );
                     }
                     {
                         std::unique_lock< std::mutex > lock( m_lock );
                         if( m_exitScheduled && !m_exitImmediate )
+                        {
+                            logger.writeln( "***   [worker] is exiting" );
                             break;
+                        }
                     }
                 }
                 // worker is finishing
+                logger.writeln( "***   [worker] is finishing" );
             }
-        void scheduleWork( const std::shared_ptr< Metadata > val, bool doWake = true )
+        void scheduleUpdate( const std::shared_ptr< Metadata > val, bool doWake = true )
+            {
+                vmf::Logger<int>& logger = vmf::getLogger<int>();
+                logger.writeln( "***       [W::scheduleUpdate] 1" );
+                std::unique_lock< std::mutex > lock( m_lock );
+                logger.writeln( "***       [W::scheduleUpdate] 2" );
+                m_items.push( val );
+                logger.writeln( "***       [W::scheduleUpdate] 3" );
+                if( doWake && !m_updateScheduled && !m_items.empty() )
+                {
+                    logger.writeln( "***       [W::scheduleUpdate] 3.1" );
+                    m_updateScheduled = true;
+                    logger.writeln( "***       [W::scheduleUpdate] 3.2" );
+                    m_signal.notify_one();
+                    logger.writeln( "***       [W::scheduleUpdate] 3.3" );
+                }
+                logger.writeln( "***       [W::scheduleUpdate] 4" );
+            }
+        void scheduleRescan( bool doWake = true )
             {
                 std::unique_lock< std::mutex > lock( m_lock );
-                m_items.push( val );
-                if( doWake && !m_workScheduled && !m_items.empty() )
+                if( doWake && !m_rescanScheduled )
                 {
-                    m_workScheduled = true;
+                    m_rescanScheduled = true;
                     m_signal.notify_one();
                 }
             }
+
         void scheduleExit( bool doImmediate = false )
             {
                 std::unique_lock< std::mutex > lock( m_lock );
@@ -281,29 +344,52 @@ private:
             }
         void wakeup()
             {
+                vmf::Logger<int>& logger = vmf::getLogger<int>();
+                logger.writeln( "***       [W::wakeup] 1" );
                 std::unique_lock< std::mutex > lock( m_lock );
-                if( m_exitScheduled || (m_workScheduled && !m_items.empty()) )
+                logger.writeln( "***       [W::wakeup] 2" );
+                logger.writeln( "***       [W::wakeup] 2 : m_exitScheduled = " + std::string( m_exitScheduled ? "T" : "F" ));
+                logger.writeln( "***       [W::wakeup] 2 : m_updateScheduled = " + std::string( m_updateScheduled ? "T" : "F" ));
+                logger.writeln( "***       [W::wakeup] 2 : m_items.empty() = " + std::string( m_items.empty() ? "T" : "F" ));
+                m_updateScheduled = (m_updateScheduled || !m_items.empty());
+                logger.writeln( "***       [W::wakeup] 2 : m_updateScheduled = " + std::string( m_updateScheduled ? "T" : "F" ));
+                if( m_exitScheduled || m_updateScheduled )
                 {
+                    logger.writeln( "***       [W::wakeup] 2.1" );
                     m_signal.notify_one();
+                    logger.writeln( "***       [W::wakeup] 2.2" );
                 }
+                logger.writeln( "***       [W::wakeup] 3" );
             }
+        void reset()
+            {
+                std::unique_lock< std::mutex > lock( m_lock );
+                if( !m_items.empty() )
+                    std::queue< std::shared_ptr< Metadata >>().swap( m_items );
+                m_updateScheduled = false;
+                m_rescanScheduled = false;
+                m_exitScheduled = false;
+                m_exitImmediate = false;
+            }
+
     private:
-        bool tryPop( std::shared_ptr< Metadata >& val )
+        bool tryPop( std::shared_ptr< Metadata >& metadata )
             {
                 std::unique_lock< std::mutex > lock( m_lock );
                 if( !m_items.empty() ) {
-                    val = m_items.front();
+                    metadata = m_items.front();
                     m_items.pop();
                     return true;
                 }
-                m_workScheduled = false;
+                m_updateScheduled = false;
                 return false;
             }
     private:
         Stat* m_stat;
         std::thread m_worker;
         std::queue< std::shared_ptr< Metadata >> m_items;
-        std::atomic< bool > m_workScheduled;
+        std::atomic< bool > m_updateScheduled;
+        std::atomic< bool > m_rescanScheduled;
         std::atomic< bool > m_exitScheduled;
         std::atomic< bool > m_exitImmediate;
         std::condition_variable m_signal;
@@ -337,12 +423,15 @@ private:
     MetadataStream* getStream() const;
 
     bool isActive() const { return m_isActive; }
-    void updateState( StatState::Type state );
+//    void updateState( StatState::Type state );
 
-    void handleMetadata( StatAction::Type action, const std::shared_ptr< Metadata > metadata );
+    void handle( const std::shared_ptr< Metadata > metadata );
+    void rescan();
+    void resetState() { m_state = StatState::UpToDate; }
 
     StatDesc m_desc;
     std::vector< StatField > m_fields;
+    StatWorker m_worker;
     StatUpdateMode::Type m_updateMode;
     StatState::Type m_state;
     bool m_isActive;

@@ -21,6 +21,7 @@
 #include "object_factory.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <vmf/logger.hpp>
 
 #include <iostream>
 
@@ -244,12 +245,15 @@ std::shared_ptr< Metadata > MetadataStream::getById( const IdType& id ) const
 
 IdType MetadataStream::add( std::shared_ptr< Metadata >& spMetadata )
 {
+    vmf::Logger<int>& logger = vmf::getLogger<int>();
     if( !this->getSchema(spMetadata->getDesc()->getSchemaName()) )
         VMF_EXCEPTION(vmf::NotFoundException, "Metadata schema is not in the stream");
 
     IdType id = nextId++;
     spMetadata->setId(id);
+    logger.writeln( "***     [MS::add] internalAdd(spMetadata) ==>" );
     internalAdd(spMetadata);
+    logger.writeln( "***     [MS::add] internalAdd(spMetadata) <==" );
     addedIds.push_back(id);
     return id;
 }
@@ -304,6 +308,7 @@ IdType MetadataStream::add( std::shared_ptr< MetadataInternal >& spMetadataInter
 
 void MetadataStream::internalAdd(const std::shared_ptr<Metadata>& spMetadata)
 {
+    vmf::Logger<int>& logger = vmf::getLogger<int>();
     spMetadata->validate();
     spMetadata->setStreamRef(this);
 
@@ -318,7 +323,9 @@ void MetadataStream::internalAdd(const std::shared_ptr<Metadata>& spMetadata)
     });
     m_oMetadataSet.push_back(spMetadata);
 
+    logger.writeln( "***     [MS::internalAdd] notifyStat(StatAction::Add, spMetadata) ==>" );
     notifyStat(StatAction::Add, spMetadata);
+    logger.writeln( "***     [MS::internalAdd] notifyStat(StatAction::Add, spMetadata) <==" );
 }
 
 bool MetadataStream::remove( const IdType& id )
@@ -850,14 +857,18 @@ void MetadataStream::convertFrameIndexToTimestamp(
 
 void MetadataStream::notifyStat(StatAction::Type action, std::shared_ptr< Metadata > spMetadata)
 {
+    vmf::Logger<int>& logger = vmf::getLogger<int>();
     for( auto& stat : m_stats )
     {
+        logger.writeln( "***     [MS::notifyStat] stat.notify(action, spMetadata) ==>" );
         stat.notify(action, spMetadata);
+        logger.writeln( "***     [MS::notifyStat] stat.notify(action, spMetadata) <==" );
     }
 }
 
 void MetadataStream::addStat(const std::string& name, const std::vector< StatField >& fields, StatUpdateMode::Type updateMode)
 {
+    vmf::Logger<int>& logger = vmf::getLogger<int>();
     auto it = std::find_if(m_stats.begin(), m_stats.end(), [&]( const Stat& s)->bool
     {
         return s.getName() == name;
@@ -868,7 +879,9 @@ void MetadataStream::addStat(const std::string& name, const std::vector< StatFie
         VMF_EXCEPTION(IncorrectParamException, "Statistics object already exists: '" + name + "'");
     }
 
+    logger.writeln( "***     [MS::addStat] updateMode = " + vmf::StatUpdateMode::toString(updateMode) );
     m_stats.emplace_back(name, fields, updateMode);
+    logger.writeln( "***     [MS::addStat] updateMode = " + vmf::StatUpdateMode::toString(m_stats.back().getUpdateMode()) );
     m_stats.back().setStream(this);
 }
 

@@ -23,6 +23,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cassert>
+#include <vmf/logger.hpp>
 
 #include "vmf/vmf.hpp"
 
@@ -132,6 +133,9 @@ static void dumpStatistics( const vmf::MetadataStream& mdStream )
 
 int sample(int argc, char *argv[])
 {
+    vmf::Logger<int>& logger = vmf::getLogger<int>();
+
+    logger.writeln( "*** [sample] sample start" );
     vmf::initialize();
 
     string appPath = argv[0];
@@ -172,6 +176,7 @@ int sample(int argc, char *argv[])
     cout << "Opening file name '" << FILE_NAME << "'" << endl;
 
     // Open metadata stream
+    logger.writeln( "*** [sample] mdStream()" );
     vmf::MetadataStream mdStream;
     if (!mdStream.open(FILE_NAME, vmf::MetadataStream::ReadWrite))
     {
@@ -211,6 +216,9 @@ int sample(int argc, char *argv[])
     fields.emplace_back( GPS_STRCAT_COORD_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_COORD_FIELD, StrCatOp::opName() );
     fields.emplace_back( GPS_STRCAT_TIME_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_TIME_FIELD, StrCatOp::opName() );
     mdStream.addStat( GPS_STAT_NAME, fields, vmf::StatUpdateMode::Manual );
+//    mdStream.addStat( GPS_STAT_NAME, fields, vmf::StatUpdateMode::OnAdd );
+
+    logger.writeln( "*** [sample] statistics object created : updateMode = " + vmf::StatUpdateMode::toString(mdStream.getStat(GPS_STAT_NAME).getUpdateMode()) );
 
     std::shared_ptr<vmf::Metadata> gpsMetadata;
 
@@ -225,7 +233,9 @@ int sample(int argc, char *argv[])
     gpsMetadata->push_back(vmf::FieldValue(GPS_TIME_FIELD, t));
 
     // Add to metadata a new item
+    logger.writeln( "*** [sample] mdStream.add(gpsMetadata) ==>" );
     mdStream.add(gpsMetadata);
+    logger.writeln( "*** [sample] mdStream.add(gpsMetadata) <==" );
 
     t = "21.02.2013 19:28";
     cout << "Adding metadata's item '" << GPS_METADATA_ITEM2 << "' with associated time " << t << endl;
@@ -234,6 +244,8 @@ int sample(int argc, char *argv[])
     gpsMetadata->push_back(vmf::FieldValue(GPS_COORD_FIELD, GPS_METADATA_ITEM2));
     gpsMetadata->push_back(vmf::FieldValue(GPS_TIME_FIELD, t));
     mdStream.add(gpsMetadata);
+
+//    mdStream.getStat(GPS_STAT_NAME).update();
 
     t = "21.02.2013 21:02";
     cout << "Adding metadata's item '" << GPS_METADATA_ITEM3 << "' with associated time " << t << endl;
@@ -251,6 +263,8 @@ int sample(int argc, char *argv[])
     gpsMetadata->push_back(vmf::FieldValue(GPS_TIME_FIELD, t));
     mdStream.add(gpsMetadata);
 
+    mdStream.getStat(GPS_STAT_NAME).update();
+
     // dump statistics
     dumpStatistics( mdStream );
 
@@ -259,11 +273,14 @@ int sample(int argc, char *argv[])
     // Save metadata to video file and close metadata stream
     mdStream.save();
     mdStream.close();
+    logger.writeln( "*** [sample] mdStream.close()" );
 
+#if 0
     cout << "Loading metadata..." << endl;
     cout << "Opening file name '" << FILE_NAME << "'" << endl;
     
     // Open new metadata stream to load and print saved metadata
+    logger.writeln( "*** [sample] loadStream()" );
     vmf::MetadataStream loadStream;
     if (!loadStream.open(FILE_NAME, vmf::MetadataStream::ReadOnly))
     {
@@ -299,6 +316,8 @@ int sample(int argc, char *argv[])
 
     // Close metadata stream
     loadStream.close();
+    logger.writeln( "*** [sample] loadStream.close()" );
+#endif
 
     // Uninitialize VMF library to free allocated resources
     vmf::terminate();

@@ -17,6 +17,7 @@
 #include "vmf/statistics.hpp"
 #include "vmf/metadata.hpp"
 #include "vmf/metadatastream.hpp"
+#include <vmf/logger.hpp>
 //#include <cstring>
 //#include <string>
 //#include <memory>
@@ -639,7 +640,7 @@ StatField& StatField::operator=( StatField&& other )
     return *this;
 }
 
-StatState::Type StatField::handle( StatAction::Type action, std::shared_ptr< Metadata > metadata )
+StatState::Type StatField::handle( std::shared_ptr< Metadata > metadata )
 {
     const std::shared_ptr< MetadataDesc > metadataDesc = metadata->getDesc();
     if( metadataDesc && (this->getMetadataDesc() == metadataDesc ))
@@ -648,7 +649,7 @@ StatState::Type StatField::handle( StatAction::Type action, std::shared_ptr< Met
         Metadata::iterator it = metadata->findField( fieldName );
         if( it != metadata->end() )
         {
-            updateState( m_op->handle( action, *it ));
+            updateState( m_op->handle( StatAction::Add, *it ));
         }
     }
     return getState();
@@ -662,7 +663,7 @@ void StatField::update( bool doRescan )
         MetadataSet metadataSet = getStream()->getAll();
         for( auto metadata : metadataSet )
         {
-            handle( StatAction::Add, metadata );
+            handle( metadata );
         }
         m_state = StatState::UpToDate;
     }
@@ -716,7 +717,8 @@ void StatField::setStream( MetadataStream* pMetadataStream )
 Stat::Stat( const std::string& name, const std::vector< StatField >& fields, StatUpdateMode::Type updateMode )
     : m_desc( name )
     , m_fields( fields )
-    , m_updateMode( StatUpdateMode::Manual )
+    , m_worker( this )
+    , m_updateMode( updateMode )
     , m_state( StatState::UpToDate )
     , m_isActive( false )
 {
@@ -725,6 +727,7 @@ Stat::Stat( const std::string& name, const std::vector< StatField >& fields, Sta
 Stat::Stat( const Stat& other )
     : m_desc( other.m_desc )
     , m_fields( other.m_fields )
+    , m_worker( this )
     , m_updateMode( other.m_updateMode )
     , m_state( other.m_state )
     , m_isActive( other.m_isActive )
@@ -734,6 +737,7 @@ Stat::Stat( const Stat& other )
 Stat::Stat( Stat&& other )
     : m_desc( std::move( other.m_desc ))
     , m_fields( std::move( other.m_fields ))
+    , m_worker( this )
     , m_updateMode( other.m_updateMode )
     , m_state( other.m_state )
     , m_isActive( other.m_isActive )
@@ -746,14 +750,14 @@ Stat::~Stat()
 
 Stat& Stat::operator=( const Stat& other )
 {
-    setStream( nullptr );
+    m_worker.reset();
 
+    setStream( nullptr );
     m_desc       = other.m_desc;
     m_fields     = other.m_fields;
     m_updateMode = other.m_updateMode;
     m_state      = other.m_state;
     m_isActive   = other.m_isActive;
-
     setStream( other.getStream() );
 
     return *this;
@@ -761,14 +765,14 @@ Stat& Stat::operator=( const Stat& other )
 
 Stat& Stat::operator=( Stat&& other )
 {
-    setStream( nullptr );
+    m_worker.reset();
 
+    setStream( nullptr );
     m_desc       = std::move( other.m_desc );
     m_fields     = std::move( other.m_fields );
     m_updateMode = std::move( other.m_updateMode );
     m_state      = std::move( other.m_state );
     m_isActive   = std::move( other.m_isActive );
-
     setStream( other.getStream() );
 
     return *this;
@@ -776,24 +780,127 @@ Stat& Stat::operator=( Stat&& other )
 
 void Stat::notify( StatAction::Type action, std::shared_ptr< Metadata > metadata )
 {
-    if( isActive() && (m_updateMode != StatUpdateMode::Disabled) )
+    vmf::Logger<int>& logger = vmf::getLogger<int>();
+    logger.writeln( "***       [S::notify] 1" );
+    if( isActive() )
     {
-        for( auto& statField : m_fields )
+        logger.writeln( "***       [S::notify] 1.1" );
+        switch( action )
         {
-            updateState( statField.handle( action, metadata ));
+        case StatAction::Add:
+            logger.writeln( "***       [S::notify] 1.1.1 : updateMode = " + StatUpdateMode::toString(m_updateMode) );
+            switch( m_updateMode )
+            {
+            case StatUpdateMode::Disabled:
+                logger.writeln( "***       [S::notify] 1.1.1.1" );
+                break;
+            case StatUpdateMode::Manual:
+            case StatUpdateMode::OnTimer:
+                logger.writeln( "***       [S::notify] 1.1.1.2" );
+                m_state = StatState::NeedUpdate;
+                logger.writeln( "***       [S::notify] 1.1.1.3" );
+                m_worker.scheduleUpdate( metadata, false );
+                logger.writeln( "***       [S::notify] 1.1.1.4" );
+                break;
+            case StatUpdateMode::OnAdd:
+                logger.writeln( "***       [S::notify] 1.1.1.5" );
+                m_state = StatState::NeedUpdate;
+                logger.writeln( "***       [S::notify] 1.1.1.6" );
+                m_worker.scheduleUpdate( metadata, true );
+                logger.writeln( "***       [S::notify] 1.1.1.7" );
+                break;
+            }
+            logger.writeln( "***       [S::notify] 1.1.2" );
+            break;
+        case StatAction::Remove:
+            logger.writeln( "***       [S::notify] 1.1.3" );
+            switch( m_updateMode )
+            {
+            case StatUpdateMode::Disabled:
+                logger.writeln( "***       [S::notify] 1.1.3.1" );
+                break;
+            case StatUpdateMode::Manual:
+            case StatUpdateMode::OnTimer:
+                logger.writeln( "***       [S::notify] 1.1.3.2" );
+                m_state = StatState::NeedRescan;
+                logger.writeln( "***       [S::notify] 1.1.3.3" );
+                break;
+            case StatUpdateMode::OnAdd:
+                logger.writeln( "***       [S::notify] 1.1.3.4" );
+                m_state = StatState::NeedRescan;
+                logger.writeln( "***       [S::notify] 1.1.3.5" );
+                m_worker.scheduleRescan();
+                logger.writeln( "***       [S::notify] 1.1.3.6" );
+                break;
+            }
+            logger.writeln( "***       [S::notify] 1.1.4" );
+            break;
         }
+        logger.writeln( "***       [S::notify] 1.2" );
     }
+    logger.writeln( "***       [S::notify] 2" );
 }
 
 void Stat::update( bool doRescan )
 {
-    if( isActive() && (m_updateMode != StatUpdateMode::Disabled) && (getState() != StatState::UpToDate) )
+    vmf::Logger<int>& logger = vmf::getLogger<int>();
+    logger.writeln( "***       [S::update] 1" );
+    if( isActive() && (getState() != StatState::UpToDate) )
     {
-        for( auto& statField : m_fields )
+        logger.writeln( "***       [S::update] 1.1" );
+        switch( m_updateMode )
         {
-            statField.update( doRescan );
+        case StatUpdateMode::Disabled:
+            logger.writeln( "***       [S::update] 1.1.1" );
+            break;
+        case StatUpdateMode::Manual:
+        case StatUpdateMode::OnTimer:
+        case StatUpdateMode::OnAdd:
+            logger.writeln( "***       [S::update] 1.1.2" );
+            if( doRescan )
+            {
+                logger.writeln( "***       [S::update] 1.1.2.1" );
+                m_state = StatState::NeedRescan;
+                logger.writeln( "***       [S::update] 1.1.2.2" );
+                m_worker.scheduleRescan();
+                logger.writeln( "***       [S::update] 1.1.2.3" );
+            }
+            else
+            {
+                logger.writeln( "***       [S::update] 1.1.2.4" );
+                m_state = StatState::NeedUpdate;
+                logger.writeln( "***       [S::update] 1.1.2.5" );
+                m_worker.wakeup();
+                logger.writeln( "***       [S::update] 1.1.2.6" );
+            }
+            logger.writeln( "***       [S::update] 1.1.3" );
+            break;
         }
-        m_state = StatState::UpToDate;
+        logger.writeln( "***       [S::update] 1.2" );
+/*
+// TODO: Busy wait loop. Perhaps it would be better to wait on conditional variable.
+//       Also, why we don't add an argument flag: wait or not to wait for update
+*/
+        while( m_state != StatState::UpToDate )
+            ;
+        logger.writeln( "***       [S::update] 1.3" );
+    }
+    logger.writeln( "***       [S::update] 2" );
+}
+
+void Stat::handle( const std::shared_ptr< Metadata > metadata )
+{
+    for( auto& statField : m_fields )
+    {
+        statField.handle( metadata );
+    }
+}
+
+void Stat::rescan()
+{
+    for( auto& statField : m_fields )
+    {
+        statField.update( true );
     }
 }
 
@@ -815,24 +922,6 @@ void Stat::setUpdateMode( StatUpdateMode::Type updateMode )
         default:
             VMF_EXCEPTION( vmf::NotImplementedException, "Unknown update mode" );
         }
-    }
-}
-
-void Stat::updateState( StatState::Type state )
-{
-    switch( state )
-    {
-    case StatState::NeedRescan:
-        if( unsigned(state) > unsigned(m_state) )
-            m_state = state;
-        break;
-    case StatState::NeedUpdate:
-        if( unsigned(state) > unsigned(m_state) )
-            m_state = state;
-        break;
-    case StatState::UpToDate:
-    default:
-        break;
     }
 }
 
@@ -878,3 +967,33 @@ MetadataStream* Stat::getStream() const
 }
 
 } // namespace vmf
+
+//        for( auto& statField : m_fields )
+//        {
+//            updateState( statField.handle( action, metadata ));
+//        }
+//        (m_updateMode != StatUpdateMode::Disabled)
+//        for( auto& statField : m_fields )
+//        {
+//            statField.update( doRescan );
+//        }
+//        m_state = StatState::UpToDate;
+
+//void Stat::updateState( StatState::Type state )
+//{
+//    switch( state )
+//    {
+//    case StatState::NeedRescan:
+//        if( unsigned(state) > unsigned(m_state) )
+//            m_state = state;
+//        break;
+//    case StatState::NeedUpdate:
+//        if( unsigned(state) > unsigned(m_state) )
+//            m_state = state;
+//        break;
+//    case StatState::UpToDate:
+//    default:
+//        break;
+//    }
+//}
+
