@@ -17,7 +17,6 @@
 #include "vmf/statistics.hpp"
 #include "vmf/metadata.hpp"
 #include "vmf/metadatastream.hpp"
-#include <vmf/logger.hpp>
 //#include <cstring>
 //#include <string>
 //#include <memory>
@@ -780,112 +779,77 @@ Stat& Stat::operator=( Stat&& other )
 
 void Stat::notify( StatAction::Type action, std::shared_ptr< Metadata > metadata )
 {
-    vmf::Logger<int>& logger = vmf::getLogger<int>();
-    logger.writeln( "***       [S::notify] 1" );
     if( isActive() )
     {
-        logger.writeln( "***       [S::notify] 1.1" );
         switch( action )
         {
         case StatAction::Add:
-            logger.writeln( "***       [S::notify] 1.1.1 : updateMode = " + StatUpdateMode::toString(m_updateMode) );
             switch( m_updateMode )
             {
             case StatUpdateMode::Disabled:
-                logger.writeln( "***       [S::notify] 1.1.1.1" );
                 break;
             case StatUpdateMode::Manual:
-            case StatUpdateMode::OnTimer:
-                logger.writeln( "***       [S::notify] 1.1.1.2" );
                 m_state = StatState::NeedUpdate;
-                logger.writeln( "***       [S::notify] 1.1.1.3" );
                 m_worker.scheduleUpdate( metadata, false );
-                logger.writeln( "***       [S::notify] 1.1.1.4" );
                 break;
             case StatUpdateMode::OnAdd:
-                logger.writeln( "***       [S::notify] 1.1.1.5" );
+            case StatUpdateMode::OnTimer:
                 m_state = StatState::NeedUpdate;
-                logger.writeln( "***       [S::notify] 1.1.1.6" );
                 m_worker.scheduleUpdate( metadata, true );
-                logger.writeln( "***       [S::notify] 1.1.1.7" );
                 break;
             }
-            logger.writeln( "***       [S::notify] 1.1.2" );
             break;
         case StatAction::Remove:
-            logger.writeln( "***       [S::notify] 1.1.3" );
             switch( m_updateMode )
             {
             case StatUpdateMode::Disabled:
-                logger.writeln( "***       [S::notify] 1.1.3.1" );
                 break;
             case StatUpdateMode::Manual:
-            case StatUpdateMode::OnTimer:
-                logger.writeln( "***       [S::notify] 1.1.3.2" );
                 m_state = StatState::NeedRescan;
-                logger.writeln( "***       [S::notify] 1.1.3.3" );
                 break;
             case StatUpdateMode::OnAdd:
-                logger.writeln( "***       [S::notify] 1.1.3.4" );
+            case StatUpdateMode::OnTimer:
                 m_state = StatState::NeedRescan;
-                logger.writeln( "***       [S::notify] 1.1.3.5" );
                 m_worker.scheduleRescan();
-                logger.writeln( "***       [S::notify] 1.1.3.6" );
                 break;
             }
-            logger.writeln( "***       [S::notify] 1.1.4" );
             break;
         }
-        logger.writeln( "***       [S::notify] 1.2" );
     }
-    logger.writeln( "***       [S::notify] 2" );
 }
 
 void Stat::update( bool doRescan )
 {
-    vmf::Logger<int>& logger = vmf::getLogger<int>();
-    logger.writeln( "***       [S::update] 1" );
-    if( isActive() && (getState() != StatState::UpToDate) )
+    if( isActive() && ((getState() != StatState::UpToDate) || doRescan) )
     {
-        logger.writeln( "***       [S::update] 1.1" );
         switch( m_updateMode )
         {
         case StatUpdateMode::Disabled:
-            logger.writeln( "***       [S::update] 1.1.1" );
             break;
         case StatUpdateMode::Manual:
-        case StatUpdateMode::OnTimer:
         case StatUpdateMode::OnAdd:
-            logger.writeln( "***       [S::update] 1.1.2" );
+        case StatUpdateMode::OnTimer:
             if( doRescan )
             {
-                logger.writeln( "***       [S::update] 1.1.2.1" );
                 m_state = StatState::NeedRescan;
-                logger.writeln( "***       [S::update] 1.1.2.2" );
                 m_worker.scheduleRescan();
-                logger.writeln( "***       [S::update] 1.1.2.3" );
             }
             else
             {
-                logger.writeln( "***       [S::update] 1.1.2.4" );
                 m_state = StatState::NeedUpdate;
-                logger.writeln( "***       [S::update] 1.1.2.5" );
                 m_worker.wakeup();
-                logger.writeln( "***       [S::update] 1.1.2.6" );
             }
-            logger.writeln( "***       [S::update] 1.1.3" );
             break;
         }
-        logger.writeln( "***       [S::update] 1.2" );
 /*
 // TODO: Busy wait loop. Perhaps it would be better to wait on conditional variable.
 //       Also, why we don't add an argument flag: wait or not to wait for update
-*/
+//----
         while( m_state != StatState::UpToDate )
             ;
-        logger.writeln( "***       [S::update] 1.3" );
+//----
+*/
     }
-    logger.writeln( "***       [S::update] 2" );
 }
 
 void Stat::handle( const std::shared_ptr< Metadata > metadata )
@@ -910,14 +874,14 @@ void Stat::setUpdateMode( StatUpdateMode::Type updateMode )
     {
         switch( updateMode )
         {
+        case StatUpdateMode::Disabled:
+            m_updateMode = updateMode;
+            break;
+        case StatUpdateMode::Manual:
         case StatUpdateMode::OnAdd:
         case StatUpdateMode::OnTimer:
-            VMF_LOG_WARNING( "Asynchronous update modes not implemented yet, StatUpdateMode::Manual used instead" );
-            updateMode = StatUpdateMode::Manual;
-            // fall down
-        case StatUpdateMode::Disabled:
-        case StatUpdateMode::Manual:
             m_updateMode = updateMode;
+            m_worker.wakeup( true );
             break;
         default:
             VMF_EXCEPTION( vmf::NotImplementedException, "Unknown update mode" );
