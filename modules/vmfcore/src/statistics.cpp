@@ -932,32 +932,3 @@ MetadataStream* Stat::getStream() const
 
 } // namespace vmf
 
-//        for( auto& statField : m_fields )
-//        {
-//            updateState( statField.handle( action, metadata ));
-//        }
-//        (m_updateMode != StatUpdateMode::Disabled)
-//        for( auto& statField : m_fields )
-//        {
-//            statField.update( doRescan );
-//        }
-//        m_state = StatState::UpToDate;
-
-//void Stat::updateState( StatState::Type state )
-//{
-//    switch( state )
-//    {
-//    case StatState::NeedRescan:
-//        if( unsigned(state) > unsigned(m_state) )
-//            m_state = state;
-//        break;
-//    case StatState::NeedUpdate:
-//        if( unsigned(state) > unsigned(m_state) )
-//            m_state = state;
-//        break;
-//    case StatState::UpToDate:
-//    default:
-//        break;
-//    }
-//}
-

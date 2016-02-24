@@ -36,7 +36,6 @@
 #include <queue>
 #include <thread>
 
-
 namespace vmf
 {
 class Metadata;
@@ -415,7 +414,6 @@ private:
     MetadataStream* getStream() const;
 
     bool isActive() const { return m_isActive; }
-//    void updateState( StatState::Type state );
 
     void handle( const std::shared_ptr< Metadata > metadata );
     void rescan();
