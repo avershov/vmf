@@ -845,10 +845,10 @@ void Stat::update( bool doRescan )
 // TODO: Busy wait loop. Perhaps it would be better to wait on conditional variable.
 //       Also, why we don't add an argument flag: wait or not to wait for update
 //----
-        while( m_state != StatState::UpToDate )
-            ;
 //----
 */
+        while( m_state != StatState::UpToDate )
+            ;
     }
 }
 

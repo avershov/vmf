@@ -27,6 +27,7 @@
 #include <thread>
 
 #include "vmf/vmf.hpp"
+#include "vmf/logger.hpp"
 
 
 //using namespace vmf;
@@ -134,6 +135,7 @@ static void dumpStatistics( const vmf::MetadataStream& mdStream )
 
 int sample(int argc, char *argv[])
 {
+    auto& logger = vmf::getLogger<int>();
     vmf::initialize();
 
     string appPath = argv[0];
@@ -269,6 +271,7 @@ int sample(int argc, char *argv[])
     cout << "Save metadata" << endl << endl;
 
     // Save metadata to video file and close metadata stream
+    logger.writeln( "[sample] mdStream.m_stats.size() = ", int(mdStream.m_stats.size()) );
     mdStream.save();
     mdStream.close();
 
@@ -277,21 +280,27 @@ int sample(int argc, char *argv[])
     
     // Open new metadata stream to load and print saved metadata
     vmf::MetadataStream loadStream;
+    logger.writeln( "[sample] loadStream.open ..." );
     if (!loadStream.open(FILE_NAME, vmf::MetadataStream::ReadOnly))
     {
         cerr << "Can't open file " << FILE_NAME << endl;
         exit(1);
     }
+    logger.writeln( "[sample] ... loadStream.open" );
+    logger.writeln( "[sample] loadStream.m_stats.size() = ", int(loadStream.m_stats.size()) );
 
     cout << "Loading schema '" << GPS_SCHEMA_NAME << "'" << endl;
+    logger.writeln( "[sample] loadStream.load(GPS_SCHEMA_NAME) ..." );
     if (!loadStream.load(GPS_SCHEMA_NAME))
     {
         cerr << "Can't load schema " << GPS_SCHEMA_NAME << endl;
         exit(1);
     }
+    logger.writeln( "[sample] ... loadStream.load(GPS_SCHEMA_NAME)" );
+    logger.writeln( "[sample] loadStream.m_stats.size() = ", int(loadStream.m_stats.size()) );
 
-    mdStream.getStat(GPS_STAT_NAME).setUpdateMode( vmf::StatUpdateMode::Manual );
-    mdStream.getStat(GPS_STAT_NAME).update( true );
+    loadStream.getStat(GPS_STAT_NAME).setUpdateMode( vmf::StatUpdateMode::Manual );
+//    loadStream.getStat(GPS_STAT_NAME).update( true );
 
     // Select all metadata items from loaded schema
     auto dataSet = loadStream.queryBySchema(GPS_SCHEMA_NAME);
@@ -308,6 +317,8 @@ int sample(int argc, char *argv[])
         string time = metadataItem->getFieldValue(GPS_TIME_FIELD);
         cout << "\tAssociated time is: " << time << endl;
     }
+
+    loadStream.getStat(GPS_STAT_NAME).update( true );
 
     // dump statistics
     dumpStatistics( loadStream );

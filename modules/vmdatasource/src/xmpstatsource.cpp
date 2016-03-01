@@ -16,6 +16,7 @@
  */
 #include <algorithm>
 
+#include "vmf/logger.hpp"
 #include "xmpstatsource.hpp"
 
 #define VMF_STATISTICS               "statistics"
@@ -35,7 +36,7 @@
 using namespace std;
 using namespace vmf;
 
-XMPStatSource::XMPStatSource(const std::shared_ptr<SXMPMeta>& statStorage)
+XMPStatSource::XMPStatSource(const std::shared_ptr<SXMPMeta> statStorage)
     : metadata(statStorage)
 {
 }
@@ -46,20 +47,28 @@ XMPStatSource::~XMPStatSource()
 
 void XMPStatSource::save(const std::vector< Stat >& stats)
 {
+    auto& logger = vmf::getLogger<int>();
+    logger.writeln( "[XMPStatSource] save() ..." );
+    logger.writeln( "[XMPStatSource::save] stats.size() = ", int(stats.size()) );
     metadata->DeleteProperty(VMF_NS, VMF_STATISTICS);
 
     MetaString pathToStatData;
     metadata->AppendArrayItem(VMF_NS, VMF_STATISTICS, kXMP_PropValueIsArray, NULL, kXMP_PropValueIsStruct);
     SXMPUtils::ComposeArrayItemPath(VMF_NS, VMF_STATISTICS, kXMP_ArrayLastItem, &pathToStatData);
+//    logger.writeln( "[XMPStatSource::save] : VMF_STATISTICS => " + pathToStatData );
     metadata->SetStructField(VMF_NS, pathToStatData.c_str(), VMF_NS, VMF_STAT, nullptr, kXMP_PropValueIsArray);
 
+//    logger.writeln( "[XMPStatSource::save] for( auto& stat : stats ) ..." );
     for( auto& stat : stats )
     {
+//        logger.writeln( "[XMPStatSource::save] for( auto& stat : stats ) : stat = " + stat.getName() );
         MetaString pathToStatArray;
         SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToStatData.c_str(), VMF_NS, VMF_STAT, &pathToStatArray);
+//        logger.writeln( "[XMPStatSource::save] : " + pathToStatData + " + VMF_STAT => " + pathToStatArray );
         metadata->AppendArrayItem(VMF_NS, pathToStatArray.c_str(), kXMP_PropValueIsArray, nullptr, kXMP_PropValueIsStruct);
         MetaString pathToStat;
         SXMPUtils::ComposeArrayItemPath(VMF_NS, pathToStatArray.c_str(), kXMP_ArrayLastItem, &pathToStat);
+//        logger.writeln( "[XMPStatSource::save] : " + pathToStatArray + " => " + pathToStat );
 
         MetaString tmpPath;
 
@@ -67,6 +76,7 @@ void XMPStatSource::save(const std::vector< Stat >& stats)
             VMF_EXCEPTION(DataStorageException, "Invalid stat object: name is invalid!");
 
         SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToStat.c_str(), VMF_NS, VMF_STAT_NAME, &tmpPath);
+//        logger.writeln( "[XMPStatSource::save] : " + pathToStat + " + VMF_STAT_NAME => " + tmpPath );
         metadata->SetProperty(VMF_NS, tmpPath.c_str(), stat.getName().c_str());
 
         std::vector< std::string > fieldNames = stat.getAllFieldNames();
@@ -76,9 +86,11 @@ void XMPStatSource::save(const std::vector< Stat >& stats)
 
             MetaString pathToFieldArray;
             SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToStat.c_str(), VMF_NS, VMF_STAT_FIELD, &pathToFieldArray);
+//            logger.writeln( "[XMPStatSource::save] : " + pathToStat + " + VMF_STAT_FIELD => " + pathToFieldArray );
             metadata->AppendArrayItem(VMF_NS, pathToFieldArray.c_str(), kXMP_PropValueIsArray, nullptr, kXMP_PropValueIsStruct);
             MetaString pathToField;
             SXMPUtils::ComposeArrayItemPath(VMF_NS, pathToFieldArray.c_str(), kXMP_ArrayLastItem, &pathToField);
+//            logger.writeln( "[XMPStatSource::save] : " + pathToFieldArray + " => " + pathToField );
 
             if (field.getName().empty())
                 VMF_EXCEPTION(DataStorageException, "Invalid stat object: field name is invalid!");
@@ -96,21 +108,28 @@ void XMPStatSource::save(const std::vector< Stat >& stats)
                 VMF_EXCEPTION(DataStorageException, "Invalid stat object: field metadata name is invalid!");
 
             SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToField.c_str(), VMF_NS, VMF_STAT_FIELD_NAME, &tmpPath);
+//            logger.writeln( "[XMPStatSource::save] : " + pathToField + "+ VMF_STAT_FIELD_NAME => " + tmpPath );
             metadata->SetProperty(VMF_NS, tmpPath.c_str(), field.getName().c_str());
 
             SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToField.c_str(), VMF_NS, VMF_STAT_FIELD_SCHEMA_NAME, &tmpPath);
+//            logger.writeln( "[XMPStatSource::save] : " + pathToField + "+ VMF_STAT_FIELD_SCHEMA_NAME => " + tmpPath );
             metadata->SetProperty(VMF_NS, tmpPath.c_str(), metadataDesc->getSchemaName().c_str());
 
             SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToField.c_str(), VMF_NS, VMF_STAT_FIELD_METADATA_NAME, &tmpPath);
+//            logger.writeln( "[XMPStatSource::save] : " + pathToField + "+ VMF_STAT_FIELD_METADATA_NAME => " + tmpPath );
             metadata->SetProperty(VMF_NS, tmpPath.c_str(), metadataDesc->getMetadataName().c_str());
 
             SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToField.c_str(), VMF_NS, VMF_STAT_FIELD_FIELD_NAME, &tmpPath);
+//            logger.writeln( "[XMPStatSource::save] : " + pathToField + "+ VMF_STAT_FIELD_FIELD_NAME => " + tmpPath );
             metadata->SetProperty(VMF_NS, tmpPath.c_str(), field.getFieldName().c_str());
 
             SXMPUtils::ComposeStructFieldPath(VMF_NS, pathToField.c_str(), VMF_NS, VMF_STAT_FIELD_OP_NAME, &tmpPath);
+//            logger.writeln( "[XMPStatSource::save] : " + pathToField + "+ VMF_STAT_FIELD_OP_NAME => " + tmpPath );
             metadata->SetProperty(VMF_NS, tmpPath.c_str(), field.getOpName().c_str());
         }
     }
+    logger.writeln( "[XMPStatSource::save] ... for( auto& stat : stats )" );
+    logger.writeln( "[XMPStatSource] ... [0] save()" );
 }
 
 void XMPStatSource::load(std::vector< Stat >& stats)

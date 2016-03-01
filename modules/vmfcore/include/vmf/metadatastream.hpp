@@ -91,7 +91,7 @@ public:
         void getResolution(long& width, long& height) const;
         void setResolution(long width, long height);
 
-    private:
+    public: //EAW//private:
         std::string title;
         double fps;
         long long timeStart;
@@ -357,13 +357,13 @@ public:
     */
     void notifyStat(StatAction::Type action, std::shared_ptr< Metadata > spMetadata);
 
-protected:
+public: //EAW//protected:
     void dataSourceCheck();
     std::shared_ptr<Metadata> import( MetadataStream& srcStream, std::shared_ptr< Metadata >& spMetadata, std::map< IdType, IdType >& mapIds, 
         long long nTarFrameIndex, long long nSrcFrameIndex, long long nNumOfFrames = FRAME_COUNT_ALL );
     void internalAdd(const std::shared_ptr< Metadata >& spMetadata);
 
-private:
+public: //EAW//private:
     void activateStats();
     void clearStats();
 

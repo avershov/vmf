@@ -17,6 +17,7 @@
 #include "vmf/metadatastream.hpp"
 #include "vmf/ireader.hpp"
 #include "vmf/iwriter.hpp"
+#include "vmf/logger.hpp"
 #include "datasource.hpp"
 #include "object_factory.hpp"
 #include <algorithm>
@@ -108,6 +109,8 @@ bool MetadataStream::load(const std::string& sSchemaName, const std::string& sMe
 
 bool MetadataStream::save(const vmf_string &compressorId)
 {
+    auto& logger = vmf::getLogger<int>();
+    logger.writeln( "[MetadataStream] save() ..." );
     dataSourceCheck();
     try
     {
@@ -129,6 +132,7 @@ bool MetadataStream::save(const vmf_string &compressorId)
             }
             removedSchemas.clear();
 
+            logger.writeln( "[MetadataStream::save] m_stats.size() = ", int(m_stats.size()) );
             for(auto& p : m_mapSchemas)
             {
                 dataSource->saveSchema(p.first, *this);
@@ -148,15 +152,18 @@ bool MetadataStream::save(const vmf_string &compressorId)
 
             dataSource->pushChanges();
 
+            logger.writeln( "[MetadataStream] ... [1] save()" );
             return true;
         }
         else
         {
+            logger.writeln( "[MetadataStream] ... [2] save()" );
             return false;
         }
     }
     catch (...)
     {
+        logger.writeln( "[MetadataStream] ... [3] save()" );
         return false;
     }
 }
