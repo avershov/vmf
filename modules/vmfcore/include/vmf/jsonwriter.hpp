@@ -39,12 +39,12 @@ public:
     /*!
     * \brief Default class constructor
     */
-    JSONWriter();
+    JSONWriter() {}
 
     /*!
     * \brief Class destructor
     */
-    ~JSONWriter();
+    virtual ~JSONWriter() {}
 
     // IWriter implementation
     virtual std::string store(const std::vector<std::shared_ptr<MetadataSchema>>& schemas);
@@ -52,8 +52,8 @@ public:
     virtual std::string store(const IdType& nextId,
                               const std::string& filepath,
                               const std::string& checksum,
-			      const std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments,
-			      const std::vector<std::shared_ptr<MetadataSchema>>& schemas,
+                              const std::vector<std::shared_ptr<MetadataStream::VideoSegment>>& segments,
+                              const std::vector<std::shared_ptr<MetadataSchema>>& schemas,
                               const MetadataSet& set,
                               const std::vector< Stat >& stats);
     virtual std::string store(const std::shared_ptr<MetadataStream::VideoSegment>& spSegment);
@@ -65,7 +65,6 @@ private:
     // hiding API that may be removed soon
     virtual std::string store(const std::shared_ptr<MetadataSchema>& spSchema);
     virtual std::string store(const std::shared_ptr<Metadata>& spMetadata);
-
 };
 
 }//vmf

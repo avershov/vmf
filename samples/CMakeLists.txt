@@ -9,6 +9,8 @@ add_subdirectory(metadata-statistics)
 add_subdirectory(metadata-manipulation)
 add_subdirectory(std-schema)
 add_subdirectory(metadata-schema)
+add_subdirectory(compression)
+
 
 if(BUILD_QT_SAMPLES)
   add_subdirectory(qt/unicode)

@@ -77,6 +77,11 @@
 #define ATTR_METADATA_DURATION_HI "duration-hi"
 #define ATTR_METADATA_DURATION_LO "duration-lo"
 
+#define COMPRESSION_ALGO_PROP_NAME  "algo"
+#define COMPRESSED_DATA_PROP_NAME   "data"
+#define COMPRESSED_DATA_DESC_NAME   "compressed-metadata"
+#define COMPRESSED_DATA_SCHEMA_NAME "com.intel.vmf.compressed-metadata"
+
 #define TAG_STATS_ARRAY "stats-array"
 #define TAG_STAT "stat"
 #define TAG_STAT_FIELDS_ARRAY "fields-array"
