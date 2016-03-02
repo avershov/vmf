@@ -17,7 +17,6 @@
 #include "xmpdatasource.hpp"
 
 #include "vmf/metadatastream.hpp"
-#include "vmf/logger.hpp"
 
 #include "xmpschemasource.hpp"
 #include "xmpmetadatasource.hpp"
@@ -121,8 +120,6 @@ void XMPDataSource::setCompressor(const vmf_string &id)
 
 void XMPDataSource::loadXMPstructs()
 {
-    auto& logger = vmf::getLogger<int>();
-    logger.writeln( "[XMPDataSource] loadXMPstructs() ..." );
     std::shared_ptr<SXMPMeta> compressedXMP = make_shared<SXMPMeta>();
     xmpFile.GetXMP(compressedXMP.get());
 
@@ -161,7 +158,6 @@ void XMPDataSource::loadXMPstructs()
                 schemaSource = make_shared<XMPSchemaSource>(xmp);
                 metadataSource = make_shared<XMPMetadataSource>(xmp);
                 statSource = make_shared<XMPStatSource>(xmp);
-                logger.writeln( "[XMPDataSource::loadXMPstructs] [1] statSource = make_shared<XMPStatSource>(xmp);" );
             }
             catch(IncorrectParamException& ce)
             {
@@ -172,7 +168,6 @@ void XMPDataSource::loadXMPstructs()
                     schemaSource = cSchemaSource;
                     metadataSource = cMetaSource;
                     statSource = make_shared<XMPStatSource>(xmp);
-                    logger.writeln( "[XMPDataSource::loadXMPstructs] [2] statSource = make_shared<XMPStatSource>(xmp);" );
                 }
                 else
                 {
@@ -186,7 +181,6 @@ void XMPDataSource::loadXMPstructs()
             schemaSource = cSchemaSource;
             metadataSource = cMetaSource;
             statSource = make_shared<XMPStatSource>(xmp);
-            logger.writeln( "[XMPDataSource::loadXMPstructs] [3] statSource = make_shared<XMPStatSource>(xmp);" );
         }
     }
     catch(const XMP_Error& e)
@@ -197,7 +191,6 @@ void XMPDataSource::loadXMPstructs()
     {
         VMF_EXCEPTION(DataStorageException, e.what());
     }
-    logger.writeln( "[XMPDataSource] ... [0] loadXMPstructs()" );
 }
 
 
@@ -468,26 +461,19 @@ void XMPDataSource::load(std::map<MetaString, std::shared_ptr<MetadataSchema> >&
 
 void XMPDataSource::saveStats(const std::vector< Stat >& stats)
 {
-    auto& logger = vmf::getLogger<int>();
-    logger.writeln( "[XMPDataSource] saveStats() ..." );
     statSourceCheck();
     try
     {
-        logger.writeln( "[XMPDataSource::saveStats] stats.size() = ", int(stats.size()) );
         statSource->save(stats);
-//        pushChanges();
     }
     catch(const XMP_Error& e)
     {
-        logger.writeln( "[XMPDataSource] ... [ex1] saveStats()" );
         VMF_EXCEPTION(DataStorageException, e.GetErrMsg());
     }
     catch(const std::exception& e)
     {
-        logger.writeln( "[XMPDataSource] ... [ex2] saveStats()" );
         VMF_EXCEPTION(DataStorageException, e.what());
     }
-    logger.writeln( "[XMPDataSource] ... [0] saveStats()" );
 }
 
 void XMPDataSource::loadStats(std::vector< Stat >& stats)

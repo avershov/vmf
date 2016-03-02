@@ -73,7 +73,7 @@ class VMF_EXPORT StatOpFactory
 {
 public:
     typedef IStatOp* (*InstanceCreator)();
-public: //EAW//private:
+private:
     typedef std::pair< std::string, InstanceCreator > UserOpItem;
     typedef std::map< std::string, InstanceCreator > UserOpMap;
 
@@ -97,7 +97,7 @@ public:
     static const std::string& sumName();
     static const std::string& lastName();
 
-public: //EAW//private:
+private:
     static UserOpMap& getClassMap();
 };
 
@@ -105,7 +105,7 @@ class VMF_EXPORT StatField
 {
     friend class Stat; // setStream()
 
-public: //EAW//private:
+private:
     class StatFieldDesc
     {
     public:
@@ -144,7 +144,7 @@ public: //EAW//private:
         void setStream( MetadataStream* pMetadataStream );
         MetadataStream* getStream() const { return m_pMetadataStream; }
 
-    public: //EAW//private:
+    private:
         std::string m_name;
         std::string m_schemaName;
         std::string m_metadataName;
@@ -179,7 +179,7 @@ public:
 
     const Variant& getValue() const { return m_op->value(); }
 
-public: //EAW//private:
+private:
     void setStream( MetadataStream* pMetadataStream );
     MetadataStream* getStream() const { return m_desc.getStream(); }
 
@@ -197,7 +197,7 @@ class VMF_EXPORT Stat
     friend class MetadataStream; // setStream()
     friend class StatWorker;     // handle()
 
-public: //EAW//private:
+private:
     class StatDesc
     {
     public:
@@ -211,23 +211,11 @@ public: //EAW//private:
 
         const std::string& getName() const { return m_name; }
 
-    public: //EAW//private:
+    private:
         std::string m_name;
     };
 
-public: //EAW//private:
-//    class StatWorker
-//    {
-//    public:
-//        explicit StatWorker( Stat* stat ) {}
-//        ~StatWorker() {}
-//        void scheduleUpdate( const std::shared_ptr< Metadata > val, bool doWake = true ) {}
-//        void scheduleRescan( bool doWake = true ) {}
-//        void scheduleExit( bool doImmediate = false ) {}
-//        void wakeup( bool doForceWakeup = false ) {}
-//        void reset() {}
-//    };
-
+private:
     class StatWorker
     {
     public:
@@ -370,7 +358,7 @@ public: //EAW//private:
                 m_exitImmediate = false;
             }
 
-    public: //EAW//private:
+    private:
         bool tryPop( std::shared_ptr< Metadata >& metadata )
             {
                 std::unique_lock< std::mutex > lock( m_lock );
@@ -383,7 +371,7 @@ public: //EAW//private:
                 return false;
             }
 
-    public: //EAW//private:
+    private:
         Stat* m_stat;
         std::thread m_worker;
         std::queue< std::shared_ptr< Metadata >> m_items;
@@ -414,14 +402,14 @@ public:
     void setUpdateTimeout( unsigned ms ) { m_updateTimeout = ms; }
     unsigned getUpdateTimeout() const { return m_updateTimeout; }
 
-    void update( bool doRescan = false );
+    void update( bool doRescan = false, bool doWait = false );
     void notify( StatAction::Type action, std::shared_ptr< Metadata > metadata );
 
     std::vector< std::string > getAllFieldNames() const;
     const StatField& getField( const std::string& name ) const;
     const Variant& operator[]( const std::string& name ) const { return getField( name ).getValue(); }
 
-public: //EAW//private:
+private:
     void setStream( MetadataStream* pMetadataStream );
     MetadataStream* getStream() const;
 
