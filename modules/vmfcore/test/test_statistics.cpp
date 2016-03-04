@@ -110,12 +110,12 @@ protected:
 
     void initNameData()
     {
-        nameData.emplace_back( "MinField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::minName() );
-        nameData.emplace_back( "MaxField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::maxName() );
-        nameData.emplace_back( "AverageField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::averageName() );
-        nameData.emplace_back( "CountField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::countName() );
-        nameData.emplace_back( "SumField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::sumName() );
-        nameData.emplace_back( "LastField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::lastName() );
+        nameData.emplace_back( "MinField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Min ));
+        nameData.emplace_back( "MaxField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Max ));
+        nameData.emplace_back( "AverageField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Average ));
+        nameData.emplace_back( "CountField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Count ));
+        nameData.emplace_back( "SumField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Sum ));
+        nameData.emplace_back( "LastField", "MetadataSchema", "MetadataName", "FieldName", vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Last ));
     }
 
     void SetUp()
@@ -229,11 +229,11 @@ protected:
     void configureStatistics( vmf::MetadataStream& stream )
     {
         std::vector< vmf::StatField > fields;
-        fields.emplace_back( stPersonNameCount, scSchemaName, scDescName, scPersonName, vmf::StatOpFactory::countName() );
-        fields.emplace_back( stPersonNameLast, scSchemaName, scDescName, scPersonName, vmf::StatOpFactory::lastName() );
-        fields.emplace_back( stPersonAgeMin, scSchemaName, scDescName, scAgeName, vmf::StatOpFactory::minName() );
-        fields.emplace_back( stPersonAgeMax, scSchemaName, scDescName, scAgeName, vmf::StatOpFactory::maxName() );
-        fields.emplace_back( stPersonGrowthAverage, scSchemaName, scDescName, scGrowthName, vmf::StatOpFactory::averageName() );
+        fields.emplace_back( stPersonNameCount, scSchemaName, scDescName, scPersonName, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Count ));
+        fields.emplace_back( stPersonNameLast, scSchemaName, scDescName, scPersonName, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Last ));
+        fields.emplace_back( stPersonAgeMin, scSchemaName, scDescName, scAgeName, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Min ));
+        fields.emplace_back( stPersonAgeMax, scSchemaName, scDescName, scAgeName, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Max ));
+        fields.emplace_back( stPersonGrowthAverage, scSchemaName, scDescName, scGrowthName, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Average ));
         stream.addStat( stStatName, fields, vmf::StatUpdateMode::Disabled );
     }
 
