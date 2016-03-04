@@ -49,9 +49,13 @@ public:
     virtual const std::string& name() const
         { return opName(); }
     virtual void reset()
-        { m_value = ""; }
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            m_value = "";
+        }
     virtual bool handle( vmf::StatAction::Type action, const vmf::Variant& inputValue )
         {
+            std::unique_lock< std::mutex > lock( m_lock );
             if( inputValue.getType() != vmf::Variant::type_string )
                 VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
             switch( action )
@@ -66,12 +70,15 @@ public:
             }
             return true;
         }
-    virtual const vmf::Variant& value() const
-        { m_temp = vmf::Variant( (vmf::vmf_string)m_value ); return m_temp; }
+    virtual vmf::Variant value() const
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            return vmf::Variant( (vmf::vmf_string)m_value );
+        }
 
 private:
+    mutable std::mutex m_lock;
     std::string m_value;
-    mutable vmf::Variant m_temp; // temp return value for getValue()
 
 public:
     static IStatOp* createInstance()

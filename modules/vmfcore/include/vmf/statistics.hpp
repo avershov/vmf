@@ -66,7 +66,7 @@ public:
     virtual const std::string& name() const = 0;
     virtual void reset() = 0;
     virtual bool handle( StatAction::Type action, const Variant& inputValue ) = 0;
-    virtual const Variant& value() const = 0;
+    virtual Variant value() const = 0;
 };
 
 class VMF_EXPORT StatOpFactory
@@ -137,7 +137,8 @@ private:
         const std::string& getSchemaName() const { return m_schemaName; }
         const std::string& getMetadataName() const { return m_metadataName; }
         std::shared_ptr< MetadataDesc > getMetadataDesc() const { return m_metadataDesc; }
-        const std::string& getFieldName() const { return m_fieldDesc.name; }
+        const std::string& getFieldName() const { return m_fieldName; }
+        const FieldDesc& getFieldDesc() const { return m_fieldDesc; }
         const std::string& getOpName() const { return m_opName; }
 
     public:
@@ -168,8 +169,11 @@ public:
     StatField& operator=( StatField&& other );
 
     const std::string& getName() const { return m_desc.getName(); }
+    const std::string& getSchemaName() const { return m_desc.getSchemaName(); }
+    const std::string& getMetadataName() const { return m_desc.getMetadataName(); }
     std::shared_ptr< MetadataDesc > getMetadataDesc() const { return m_desc.getMetadataDesc(); }
     const std::string& getFieldName() const { return m_desc.getFieldName(); }
+    const FieldDesc& getFieldDesc() const { return m_desc.getFieldDesc(); }
     const std::string& getOpName() const { return m_desc.getOpName(); }
 
     StatState::Type getState() const { return m_state; }
@@ -177,7 +181,7 @@ public:
     void update( bool doRescan = false );
     StatState::Type handle( std::shared_ptr< Metadata > metadata );
 
-    const Variant& getValue() const { return m_op->value(); }
+    Variant getValue() const { return m_op->value(); }
 
 private:
     void setStream( MetadataStream* pMetadataStream );
@@ -394,7 +398,7 @@ public:
     Stat& operator=( Stat&& other );
 
     const std::string& getName() const { return m_desc.getName(); }
-    StatState::Type getState() const { return m_state; }
+    StatState::Type getState() const;
 
     StatUpdateMode::Type getUpdateMode() const { return m_updateMode; }
     void setUpdateMode( StatUpdateMode::Type updateMode );
@@ -407,7 +411,7 @@ public:
 
     std::vector< std::string > getAllFieldNames() const;
     const StatField& getField( const std::string& name ) const;
-    const Variant& operator[]( const std::string& name ) const { return getField( name ).getValue(); }
+    Variant operator[]( const std::string& name ) const { return getField( name ).getValue(); }
 
 private:
     void setStream( MetadataStream* pMetadataStream );
@@ -417,15 +421,18 @@ private:
 
     void handle( const std::shared_ptr< Metadata > metadata );
     void rescan();
-    void resetState() { m_state = StatState::UpToDate; }
+    void setState( StatState::Type state );
+    void resetState() { setState( StatState::UpToDate ); }
 
     StatDesc m_desc;
     std::vector< StatField > m_fields;
     StatWorker m_worker;
     StatUpdateMode::Type m_updateMode;
     unsigned m_updateTimeout;
-    StatState::Type m_state;
     bool m_isActive;
+
+    mutable std::mutex m_lock;
+    StatState::Type m_state;
 };
 
 } // namespace vmf

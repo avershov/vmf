@@ -74,9 +74,13 @@ public:
     virtual const std::string& name() const
         { return opName(); }
     virtual void reset()
-        { m_value = Variant(); }
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            m_value = Variant();
+        }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
         {
+            std::unique_lock< std::mutex > lock( m_lock );
             switch( action )
             {
             case StatAction::Add:
@@ -117,10 +121,14 @@ public:
             }
             return true;
         }
-    virtual const Variant& value() const
-        { return m_value; }
+    virtual Variant value() const
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            return m_value;
+        }
 
 private:
+    mutable std::mutex m_lock;
     Variant m_value;
 
 public:
@@ -145,9 +153,13 @@ public:
     virtual const std::string& name() const
         { return opName(); }
     virtual void reset()
-        { m_value = Variant(); }
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            m_value = Variant();
+        }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
         {
+            std::unique_lock< std::mutex > lock( m_lock );
             switch( action )
             {
             case StatAction::Add:
@@ -188,10 +200,14 @@ public:
             }
             return true;
         }
-    virtual const Variant& value() const
-        { return m_value; }
+    virtual Variant value() const
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            return m_value;
+        }
 
 private:
+    mutable std::mutex m_lock;
     Variant m_value;
 
 public:
@@ -216,9 +232,14 @@ public:
     virtual const std::string& name() const
         { return opName(); }
     virtual void reset()
-        { m_count = 0; m_value = Variant(); }
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            m_count = 0;
+            m_value = Variant();
+        }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
         {
+            std::unique_lock< std::mutex > lock( m_lock );
             switch( action )
             {
             case StatAction::Add:
@@ -259,28 +280,27 @@ public:
             }
             return true;
         }
-    virtual const Variant& value() const
+    virtual Variant value() const
         {
+            std::unique_lock< std::mutex > lock( m_lock );
             switch( m_value.getType() )
             {
             case Variant::type_unknown: // isEmpty()
+                return m_value;
                 break;
             case Variant::type_integer:
-                m_temp = Variant( ((vmf_real) m_value.get_integer()) / m_count );
-                return m_temp;
+                return Variant( ((vmf_real) m_value.get_integer()) / m_count );
             case Variant::type_real:
-                m_temp = Variant( ((vmf_real) m_value.get_real()) / m_count );
-                return m_temp;
+                return Variant( ((vmf_real) m_value.get_real()) / m_count );
             default:
                 VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
             }
-            return m_value;
         }
 
 private:
+    mutable std::mutex m_lock;
     Variant m_value;
     vmf_integer m_count;
-    mutable Variant m_temp; // temp return value for getValue()
 
 public:
     static IStatOp* createInstance()
@@ -304,9 +324,13 @@ public:
     virtual const std::string& name() const
         { return opName(); }
     virtual void reset()
-        { m_count = 0; }
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            m_count = 0;
+        }
     virtual bool handle( StatAction::Type action, const Variant& /*inputValue*/ )
         {
+            std::unique_lock< std::mutex > lock( m_lock );
             switch( action )
             {
             case StatAction::Add:
@@ -320,12 +344,15 @@ public:
             }
             return true;
         }
-    virtual const Variant& value() const
-        { m_temp = Variant( (vmf_integer)m_count ); return m_temp; }
+    virtual Variant value() const
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            return Variant( (vmf_integer)m_count );
+        }
 
 private:
+    mutable std::mutex m_lock;
     vmf_integer m_count;
-    mutable Variant m_temp; // temp return value for getValue()
 
 public:
     static IStatOp* createInstance()
@@ -349,9 +376,13 @@ public:
     virtual const std::string& name() const
         { return opName(); }
     virtual void reset()
-        { m_value = Variant(); }
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            m_value = Variant();
+        }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
         {
+            std::unique_lock< std::mutex > lock( m_lock );
             switch( action )
             {
             case StatAction::Add:
@@ -392,10 +423,14 @@ public:
             }
             return true;
         }
-    virtual const Variant& value() const
-        { return m_value; }
+    virtual Variant value() const
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            return m_value;
+        }
 
 private:
+    mutable std::mutex m_lock;
     Variant m_value;
 
 public:
@@ -420,9 +455,13 @@ public:
     virtual const std::string& name() const
         { return opName(); }
     virtual void reset()
-        { m_value = Variant(); }
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            m_value = Variant();
+        }
     virtual bool handle( StatAction::Type action, const Variant& inputValue )
         {
+            std::unique_lock< std::mutex > lock( m_lock );
             switch( action )
             {
             case StatAction::Add:
@@ -433,10 +472,14 @@ public:
             }
             return true;
         }
-    virtual const Variant& value() const
-        { return m_value; }
+    virtual Variant value() const
+        {
+            std::unique_lock< std::mutex > lock( m_lock );
+            return m_value;
+        }
 
 private:
+    mutable std::mutex m_lock;
     Variant m_value;
 
 public:
@@ -718,8 +761,9 @@ Stat::Stat( const std::string& name, const std::vector< StatField >& fields, Sta
     , m_fields( fields )
     , m_worker( this )
     , m_updateMode( updateMode )
-    , m_state( StatState::UpToDate )
+    , m_updateTimeout( 0 )
     , m_isActive( false )
+    , m_state( StatState::UpToDate )
 {
 }
 
@@ -728,8 +772,9 @@ Stat::Stat( const Stat& other )
     , m_fields( other.m_fields )
     , m_worker( this )
     , m_updateMode( other.m_updateMode )
-    , m_state( other.m_state )
+    , m_updateTimeout( 0 )
     , m_isActive( other.m_isActive )
+    , m_state( other.m_state )
 {
 }
 
@@ -738,8 +783,9 @@ Stat::Stat( Stat&& other )
     , m_fields( std::move( other.m_fields ))
     , m_worker( this )
     , m_updateMode( other.m_updateMode )
-    , m_state( other.m_state )
+    , m_updateTimeout( 0 )
     , m_isActive( other.m_isActive )
+    , m_state( other.m_state )
 {
 }
 
@@ -752,11 +798,12 @@ Stat& Stat::operator=( const Stat& other )
     m_worker.reset();
 
     setStream( nullptr );
-    m_desc       = other.m_desc;
-    m_fields     = other.m_fields;
-    m_updateMode = other.m_updateMode;
-    m_state      = other.m_state;
-    m_isActive   = other.m_isActive;
+    m_desc          = other.m_desc;
+    m_fields        = other.m_fields;
+    m_updateMode    = other.m_updateMode;
+    m_updateTimeout = other.m_updateTimeout;
+    m_isActive      = other.m_isActive;
+    m_state         = other.m_state;
     setStream( other.getStream() );
 
     return *this;
@@ -767,11 +814,12 @@ Stat& Stat::operator=( Stat&& other )
     m_worker.reset();
 
     setStream( nullptr );
-    m_desc       = std::move( other.m_desc );
-    m_fields     = std::move( other.m_fields );
-    m_updateMode = std::move( other.m_updateMode );
-    m_state      = std::move( other.m_state );
-    m_isActive   = std::move( other.m_isActive );
+    m_desc          = std::move( other.m_desc );
+    m_fields        = std::move( other.m_fields );
+    m_updateMode    = std::move( other.m_updateMode );
+    m_updateTimeout = std::move( other.m_updateTimeout );
+    m_isActive      = std::move( other.m_isActive );
+    m_state         = std::move( other.m_state );
     setStream( other.getStream() );
 
     return *this;
@@ -789,12 +837,12 @@ void Stat::notify( StatAction::Type action, std::shared_ptr< Metadata > metadata
             case StatUpdateMode::Disabled:
                 break;
             case StatUpdateMode::Manual:
-                m_state = StatState::NeedUpdate;
+                setState( StatState::NeedUpdate );
                 m_worker.scheduleUpdate( metadata, false );
                 break;
             case StatUpdateMode::OnAdd:
             case StatUpdateMode::OnTimer:
-                m_state = StatState::NeedUpdate;
+                setState( StatState::NeedUpdate );
                 m_worker.scheduleUpdate( metadata, true );
                 break;
             }
@@ -805,11 +853,11 @@ void Stat::notify( StatAction::Type action, std::shared_ptr< Metadata > metadata
             case StatUpdateMode::Disabled:
                 break;
             case StatUpdateMode::Manual:
-                m_state = StatState::NeedRescan;
+                setState( StatState::NeedRescan );
                 break;
             case StatUpdateMode::OnAdd:
             case StatUpdateMode::OnTimer:
-                m_state = StatState::NeedRescan;
+                setState( StatState::NeedRescan );
                 m_worker.scheduleRescan();
                 break;
             }
@@ -831,12 +879,12 @@ void Stat::update( bool doRescan, bool doWait )
         case StatUpdateMode::OnTimer:
             if( doRescan )
             {
-                m_state = StatState::NeedRescan;
+                setState( StatState::NeedRescan );
                 m_worker.scheduleRescan();
             }
             else
             {
-                m_state = StatState::NeedUpdate;
+                setState( StatState::NeedUpdate );
                 m_worker.wakeup();
             }
             break;
@@ -849,7 +897,7 @@ void Stat::update( bool doRescan, bool doWait )
             //----
             //----
             */
-            while( m_state != StatState::UpToDate )
+            while( getState() != StatState::UpToDate )
                 ;
         }
     }
@@ -931,6 +979,18 @@ void Stat::setStream( MetadataStream* pMetadataStream )
 MetadataStream* Stat::getStream() const
 {
     return (m_fields.empty() ? nullptr : m_fields[0].getStream());
+}
+
+StatState::Type Stat::getState() const
+{
+    std::unique_lock< std::mutex > lock( m_lock );
+    return m_state;
+}
+
+void Stat::setState( StatState::Type state )
+{
+    std::unique_lock< std::mutex > lock( m_lock );
+    m_state = state;
 }
 
 } // namespace vmf
