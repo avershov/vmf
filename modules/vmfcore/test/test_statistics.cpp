@@ -357,7 +357,7 @@ TEST_P( TestStatistics, Gathering )
 {
     vmf::StatUpdateMode::Type updateMode = GetParam();
     unsigned updateTimeout = 100;
-    bool doCheckStatistics = false;
+    const bool doCheckStatistics = true;
 
     std::string fileName = "test_statistics.avi";
     createFile( fileName );
@@ -414,9 +414,7 @@ TEST_P( TestStatistics, Gathering )
 
 INSTANTIATE_TEST_CASE_P(UnitTest, TestStatistics,
                         ::testing::Values(
-                            vmf::StatUpdateMode::Disabled,
-                            vmf::StatUpdateMode::Manual,
-                            vmf::StatUpdateMode::OnAdd,
-                            vmf::StatUpdateMode::OnTimer
+                            vmf::StatUpdateMode::Disabled ,vmf::StatUpdateMode::Manual
+                            /*,vmf::StatUpdateMode::OnAdd, vmf::StatUpdateMode::OnTimer*/
                             ));
 
