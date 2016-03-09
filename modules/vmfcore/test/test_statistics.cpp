@@ -263,7 +263,7 @@ protected:
             outputType = vmf::Variant::type_integer;
         else if( flags & OutputReal )
             outputType = vmf::Variant::type_real;
-        else /*if( flags & OutputReal )*/
+        else /*if( flags & OutputSame )*/
             outputType = vmf::Variant::type_unknown; // depends on input type, see below
 
         // provide consistent test inputs
