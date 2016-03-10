@@ -444,7 +444,8 @@ public:
 
 StatOpBase* StatOpFactory::create( const std::string& name )
 {
-    // TODO: use lock for thread-safe access to UserOpMap instance
+    std::unique_lock< std::mutex > lock( getLock() );
+
     const UserOpMap& ops = getClassMap();
 
     auto it = ops.find( name );
@@ -462,7 +463,37 @@ StatOpBase* StatOpFactory::create( const std::string& name )
     return op;
 }
 
+bool StatOpFactory::isRegistered( const std::string& name )
+{
+    std::unique_lock< std::mutex > lock( getLock() );
+
+    const UserOpMap& ops = getClassMap();
+
+    auto it = ops.find( name );
+    return bool( it != ops.end() );
+}
+
 void StatOpFactory::registerUserOp( InstanceCreator createInstance )
+{
+    std::string userOpName = getUserOpName( createInstance );
+
+    std::unique_lock< std::mutex > lock( getLock() );
+
+    UserOpMap& ops = getClassMap();
+
+    auto it = ops.find( userOpName );
+    if( it != ops.end() )
+    {
+        // Note that op can't be registered twice even with the same creator func. Use isRegistered() to check
+        VMF_EXCEPTION( vmf::IncorrectParamException, "User operation is registered twice: '" + userOpName + "'" );
+    }
+    else
+    {
+        ops.insert( UserOpItem( userOpName, createInstance ));
+    }
+}
+
+std::string StatOpFactory::getUserOpName( InstanceCreator createInstance )
 {
     if( createInstance == nullptr )
     {
@@ -470,27 +501,13 @@ void StatOpFactory::registerUserOp( InstanceCreator createInstance )
     }
 
     std::unique_ptr< StatOpBase > userOp( createInstance() );
-    std::string userOpName = userOp->name();
 
-    // TODO: use lock for thread-safe access to UserOpMap instance
-    UserOpMap& ops = getClassMap();
+    if( userOp == nullptr )
+    {
+        VMF_EXCEPTION( vmf::NullPointerException, "User operation isn't created by its createInstance() call" );
+    }
 
-    auto it = ops.find( userOpName );
-    if( it != ops.end() )
-    {
-        if( it->second != createInstance )
-        {
-            VMF_EXCEPTION( vmf::IncorrectParamException, "User operation is registered twice: '" + userOpName + "'" );
-        }
-        else
-        {
-            // Registered twice with the same createInstance() function; it's not an error
-        }
-    }
-    else
-    {
-        ops.insert( UserOpItem( userOpName, createInstance ));
-    }
+    return userOp->name();
 }
 
 #define ALL_BUILTIN_OPS( _op ) \
@@ -501,10 +518,18 @@ void StatOpFactory::registerUserOp( InstanceCreator createInstance )
         _op( Sum );     \
         _op( Last );
 
+std::mutex& StatOpFactory::getLock()
+{
+    // Singletone model based on initialization of function-local static object
+    // Object initialized once on first time we have entered the function
+    static std::mutex lock;
+    return lock;
+}
+
 #define OP_REGISTER( _x ) ops.insert( UserOpItem( builtinName( BuiltinOp::_x ), StatOp ## _x ::createInstance ))
 StatOpFactory::UserOpMap& StatOpFactory::getClassMap()
 {
-    // Singletone model based on initialisation of function-local static object
+    // Singletone model based on initialization of function-local static object
     // Object initialized once on first time we have entered the function
     static UserOpMap ops;
 

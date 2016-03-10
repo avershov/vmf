@@ -235,6 +235,11 @@ protected:
         vmf::Variant val1,val2,val3,bad,res;
         vmf::StatOpBase* op = nullptr;
 
+        // test if operation is registered
+        status = false;
+        EXPECT_NO_THROW( status = vmf::StatOpFactory::isRegistered( name ));
+        ASSERT_EQ( status, true );
+
         // created op by fabric call
         EXPECT_NO_THROW( op = vmf::StatOpFactory::create( name ));
         ASSERT_NE( op, nullptr );
@@ -375,6 +380,7 @@ protected:
 
     void testStatOpFactory()
     {
+        bool status;
         std::string name,str;
         vmf::StatOpBase* op = nullptr;
 
@@ -392,9 +398,18 @@ protected:
         ASSERT_EQ( name, UserOp::userOpName );
         delete op; op = nullptr;
 
+        status = true;
+        EXPECT_NO_THROW( status = vmf::StatOpFactory::isRegistered( name ));
+        ASSERT_EQ( status, false );
+
         EXPECT_THROW( vmf::StatOpFactory::registerUserOp( nullptr ), vmf::NullPointerException );
         EXPECT_NO_THROW( vmf::StatOpFactory::registerUserOp( UserOp::createInstance ));
+        EXPECT_THROW( vmf::StatOpFactory::registerUserOp( UserOp::createInstance ), vmf::IncorrectParamException );
         EXPECT_THROW( vmf::StatOpFactory::registerUserOp( UserOp::createInstance2 ), vmf::IncorrectParamException );
+
+        status = false;
+        EXPECT_NO_THROW( status = vmf::StatOpFactory::isRegistered( name ));
+        ASSERT_EQ( status, true );
 
         ASSERT_EQ( op, nullptr );
         EXPECT_NO_THROW( op = vmf::StatOpFactory::create( name ));
@@ -407,40 +422,19 @@ protected:
     class UserOp: public vmf::StatOpBase
     {
     public:
-        UserOp()
-            {}
-        virtual ~UserOp()
-            {}
-
+        UserOp() {}
+        virtual ~UserOp() {}
     public:
-        virtual std::string name() const
-            { return userOpName; }
-        virtual void reset()
-            { m_value = vmf::Variant(); }
-        virtual bool handle( vmf::StatAction::Type action, const vmf::Variant& fieldValue )
-            {
-                switch( action )
-                {
-                case vmf::StatAction::Add:
-                    m_value = fieldValue;
-                    break;
-                case vmf::StatAction::Remove:
-                    return false;
-                }
-                return true;
-            }
-        virtual vmf::Variant value() const
-            { return m_value; }
-
+        virtual std::string name() const { return userOpName; }
+        virtual void reset() { m_value = vmf::Variant(); }
+        virtual bool handle( vmf::StatAction::Type /*action*/, const vmf::Variant& /*fieldValue*/ ) { return true; }
+        virtual vmf::Variant value() const { return m_value; }
     private:
         vmf::Variant m_value;
-
     public:
+        static vmf::StatOpBase* createInstance() { return new UserOp(); }
+        static vmf::StatOpBase* createInstance2() { return new UserOp(); }
         static const std::string userOpName;
-        static vmf::StatOpBase* createInstance()
-            { return new UserOp(); }
-        static vmf::StatOpBase* createInstance2()
-            { return new UserOp(); }
     };
 };
 

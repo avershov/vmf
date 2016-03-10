@@ -76,6 +76,7 @@ public:
 
 public:
     static StatOpBase* create( const std::string& name );
+    static bool isRegistered( const std::string& name );
     static void registerUserOp( InstanceCreator createInstance );
 
     struct BuiltinOp { enum Type { Min, Max, Average, Count, Sum, Last }; };
@@ -84,7 +85,9 @@ public:
 private:
     typedef std::pair< std::string, InstanceCreator > UserOpItem;
     typedef std::map< std::string, InstanceCreator > UserOpMap;
+    static std::mutex& getLock();
     static UserOpMap& getClassMap();
+    static std::string getUserOpName( InstanceCreator createInstance );
 };
 
 class VMF_EXPORT StatField
