@@ -139,8 +139,6 @@ static void dumpStatistics( const vmf::MetadataStream& mdStream )
 
 int sample(int argc, char *argv[])
 {
-    vmf::initialize();
-
     string appPath = argv[0];
 #ifdef WIN32
     char delim = '\\';
@@ -315,9 +313,6 @@ int sample(int argc, char *argv[])
 
     // Close metadata stream
     loadStream.close();
-
-    // Uninitialize VMF library to free allocated resources
-    vmf::terminate();
 
     return 0;
 }

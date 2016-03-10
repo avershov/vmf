@@ -445,8 +445,6 @@ class TestStatistics : public ::testing::TestWithParam< vmf::StatUpdateMode::Typ
 protected:
     void SetUp()
     {
-        vmf::initialize();
-
         fnWorkingPath = getWorkingPath();
         fnInputName   = "BlueSquare.avi";
 
@@ -464,11 +462,6 @@ protected:
         scPersonAgeMax        = "PersonAgeMax";
         scPersonGrowthAverage = "PersonGrowthAverage";
         scPersonSalarySum     = "PersonSalarySum";
-    }
-
-    void TearDown()
-    {
-        vmf::terminate();
     }
 
     std::string getWorkingPath() const
