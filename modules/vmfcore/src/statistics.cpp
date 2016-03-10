@@ -719,7 +719,7 @@ StatField& StatField::operator=( const StatField& other )
 
     m_desc.reset( new StatFieldDesc( *other.m_desc ));
 
-    delete m_op;
+    delete m_op; m_op = nullptr;
     m_op = (other.m_op != nullptr) ? StatOpFactory::create( other.m_op->name() ) : nullptr;
 
     m_state = other.m_state;
@@ -736,8 +736,6 @@ StatField& StatField::operator=( StatField&& other )
 
     m_desc = std::move( other.m_desc );
 
-    delete m_op;
-    m_op = nullptr;
     std::swap( m_op, other.m_op );
 
     m_state = other.m_state;
