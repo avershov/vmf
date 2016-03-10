@@ -300,13 +300,16 @@ protected:
             // try to remove anything on empty state
             if( flags & CanRemove )
             {
-                EXPECT_THROW( status = op->handle( vmf::StatAction::Remove, val1 ), vmf::NotImplementedException );
+                status = true;
+                EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Remove, val1 ));
+                ASSERT_EQ( status, false );
             }
 
             // must always support Add
             ASSERT_NE( flags & CanAdd, 0 );
 
             // Add first value
+            status = false;
             EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Add, val1 ));
             ASSERT_EQ( status, true );
 
@@ -317,6 +320,7 @@ protected:
                 ASSERT_EQ( res.getType(), outputType );
 
             // Add second value
+            status = false;
             EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Add, val2 ));
             ASSERT_EQ( status, true );
 
@@ -327,6 +331,7 @@ protected:
                 ASSERT_EQ( res.getType(), outputType );
 
             // Add third value
+            status = false;
             EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Add, val3 ));
             ASSERT_EQ( status, true );
 
@@ -339,6 +344,7 @@ protected:
             // try to handle bad input
             if( bad.getType() == vmf::Variant::type_unknown )
             {
+                status = false;
                 EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Add, bad ));
                 ASSERT_EQ( status, true );
             }
@@ -350,6 +356,7 @@ protected:
             // try to remove anything on non-empty state
             if( flags & CanRemove )
             {
+                status = false;
                 EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Remove, val1 ));
                 ASSERT_EQ( status, true );
             }

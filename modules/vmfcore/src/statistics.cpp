@@ -173,20 +173,7 @@ public:
                     }
                 break;
             case StatAction::Remove:
-                if( m_value.isEmpty() )
-                    VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
-                else if( m_value.getType() != fieldValue.getType() )
-                    VMF_EXCEPTION( vmf::TypeCastException, "Type mismatch" );
-                switch( m_value.getType() )
-                {
-                case Variant::type_integer:
-                    return false;
-                case Variant::type_real:
-                    return false;
-                default:
-                    VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
-                }
-                break;
+                return false;
             }
             return true;
         }
@@ -247,9 +234,7 @@ public:
                 break;
             case StatAction::Remove:
                 if( m_value.isEmpty() )
-                    VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
-                else if( m_value.getType() != fieldValue.getType() )
-                    VMF_EXCEPTION( vmf::TypeCastException, "Type mismatch" );
+                    return false;
                 switch( m_value.getType() )
                 {
                 case Variant::type_integer:
@@ -318,7 +303,7 @@ public:
                 break;
             case StatAction::Remove:
                 if( !(m_count > 0) )
-                    VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
+                    return false;
                 --m_count;
                 break;
             }
@@ -380,9 +365,7 @@ public:
                 break;
             case StatAction::Remove:
                 if( m_value.isEmpty() )
-                    VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
-                else if( m_value.getType() != fieldValue.getType() )
-                    VMF_EXCEPTION( vmf::TypeCastException, "Type mismatch" );
+                    return false;
                 switch( m_value.getType() )
                 {
                 case Variant::type_integer:
