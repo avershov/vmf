@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 Intel(r) Corporation
+ * Copyright 2016 Intel(r) Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,6 @@ void copyFile(const string& srcName, const char *dstName)
         dst << src.rdbuf();
     else
         VMF_EXCEPTION(vmf::IncorrectParamException, "Error copying '" + srcName + "' to '" + dstName + "'");
-    //src.close();
-    //dst.close();
 }
 
 class StrCatOp: public vmf::StatOpBase
@@ -64,22 +62,14 @@ public:
             std::unique_lock< std::mutex > lock( m_lock );
             m_value = "";
         }
-    virtual bool handle( vmf::StatAction::Type action, const vmf::Variant& fieldValue )
+    virtual void handle( const vmf::Variant& fieldValue )
         {
             std::unique_lock< std::mutex > lock( m_lock );
             if( fieldValue.getType() != vmf::Variant::type_string )
                 VMF_EXCEPTION( vmf::NotImplementedException, "Operation not applicable to this data type" );
-            switch( action )
-            {
-            case vmf::StatAction::Add:
-                if( !m_value.empty() )
-                    m_value += " | ";
-                m_value += fieldValue.get_string();
-                break;
-            case vmf::StatAction::Remove:
-                return false;
-            }
-            return true;
+            if( !m_value.empty() )
+                m_value += " | ";
+            m_value += fieldValue.get_string();
         }
     virtual vmf::Variant value() const
         {

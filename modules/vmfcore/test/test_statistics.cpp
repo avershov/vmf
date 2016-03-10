@@ -215,18 +215,8 @@ protected:
         ResetMask  = 0x0f00, // reset mask
         ResetInt   = 0x0100, //   reset to integer 0
         ResetReal  = 0x0200, //   reset to real 0
-        ResetEmpty = 0x0400, //   reset to empty value (type_unknown)
-        CanMask    = 0xf000, // can mask
-        CanAdd     = 0x1000, //   can add value
-        CanRemove  = 0x2000  //   can remove value
+        ResetEmpty = 0x0400  //   reset to empty value (type_unknown)
     };
-
-    // Min      i:i r:r A:t R:f
-    // Max
-    // Average  i:r r:r A:t R:t
-    // Count    any:i   A:t R:t
-    // Sum      i:i r:r A:t R:t
-    // Last     any:id  A:t R:f
 
     void testBuiltin( const std::string& name, unsigned flags )
     {
@@ -302,21 +292,8 @@ protected:
                 // output depends on input type of individual value, must be checked individually
             }
 
-            // try to remove anything on empty state
-            if( flags & CanRemove )
-            {
-                status = true;
-                EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Remove, val1 ));
-                ASSERT_EQ( status, false );
-            }
-
-            // must always support Add
-            ASSERT_NE( flags & CanAdd, 0 );
-
             // Add first value
-            status = false;
-            EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Add, val1 ));
-            ASSERT_EQ( status, true );
+            EXPECT_NO_THROW( op->handle( val1 ));
 
             EXPECT_NO_THROW( res = op->value() );
             if( outputType == vmf::Variant::type_unknown )
@@ -325,9 +302,7 @@ protected:
                 ASSERT_EQ( res.getType(), outputType );
 
             // Add second value
-            status = false;
-            EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Add, val2 ));
-            ASSERT_EQ( status, true );
+            EXPECT_NO_THROW( op->handle( val2 ));
 
             EXPECT_NO_THROW( res = op->value() );
             if( outputType == vmf::Variant::type_unknown )
@@ -336,9 +311,7 @@ protected:
                 ASSERT_EQ( res.getType(), outputType );
 
             // Add third value
-            status = false;
-            EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Add, val3 ));
-            ASSERT_EQ( status, true );
+            EXPECT_NO_THROW( op->handle( val3 ));
 
             EXPECT_NO_THROW( res = op->value() );
             if( outputType == vmf::Variant::type_unknown )
@@ -348,23 +321,9 @@ protected:
 
             // try to handle bad input
             if( bad.getType() == vmf::Variant::type_unknown )
-            {
-                status = false;
-                EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Add, bad ));
-                ASSERT_EQ( status, true );
-            }
+                EXPECT_NO_THROW( op->handle( bad ));
             else
-            {
-                EXPECT_THROW( status = op->handle( vmf::StatAction::Add, bad ), vmf::TypeCastException );
-            }
-
-            // try to remove anything on non-empty state
-            if( flags & CanRemove )
-            {
-                status = false;
-                EXPECT_NO_THROW( status = op->handle( vmf::StatAction::Remove, val1 ));
-                ASSERT_EQ( status, true );
-            }
+                EXPECT_THROW( op->handle( bad ), vmf::TypeCastException );
 
             if( flags & InputInt )
                 flags &= ~InputInt;
@@ -427,7 +386,7 @@ protected:
     public:
         virtual std::string name() const { return userOpName; }
         virtual void reset() { m_value = vmf::Variant(); }
-        virtual bool handle( vmf::StatAction::Type /*action*/, const vmf::Variant& /*fieldValue*/ ) { return true; }
+        virtual void handle( const vmf::Variant& /*fieldValue*/ ) {}
         virtual vmf::Variant value() const { return m_value; }
     private:
         vmf::Variant m_value;
@@ -443,37 +402,37 @@ protected:
 TEST_F( TestStatOperations, BuiltinMin )
 {
     testBuiltin( vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Min ),
-                 InputInt | InputReal | OutputSame | ResetEmpty | CanAdd );
+                 InputInt | InputReal | OutputSame | ResetEmpty );
 }
 
 TEST_F( TestStatOperations, BuiltinMax )
 {
     testBuiltin( vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Max ),
-                 InputInt | InputReal | OutputSame | ResetEmpty | CanAdd );
+                 InputInt | InputReal | OutputSame | ResetEmpty );
 }
 
 TEST_F( TestStatOperations, BuiltinAverage )
 {
     testBuiltin( vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Average ),
-                 InputInt | InputReal | OutputReal | ResetEmpty | CanAdd | CanRemove );
+                 InputInt | InputReal | OutputReal | ResetEmpty );
 }
 
 TEST_F( TestStatOperations, BuiltinCount )
 {
     testBuiltin( vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Count ),
-                 InputAny | OutputInt | ResetInt | CanAdd | CanRemove );
+                 InputAny | OutputInt | ResetInt );
 }
 
 TEST_F( TestStatOperations, BuiltinSum )
 {
     testBuiltin( vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Sum ),
-                 InputInt | InputReal | OutputSame | ResetEmpty | CanAdd | CanRemove );
+                 InputInt | InputReal | OutputSame | ResetEmpty );
 }
 
 TEST_F( TestStatOperations, BuiltinLast )
 {
     testBuiltin( vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Last ),
-                 InputAny | OutputSame | ResetEmpty | CanAdd );
+                 InputAny | OutputSame | ResetEmpty );
 }
 
 TEST_F( TestStatOperations, StatOpFactory )
