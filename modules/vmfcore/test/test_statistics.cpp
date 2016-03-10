@@ -528,7 +528,7 @@ protected:
         fields.emplace_back( scPersonAgeMax, mcSchemaName, mcDescName, mcAgeName, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Max ));
         fields.emplace_back( scPersonGrowthAverage, mcSchemaName, mcDescName, mcGrowthName, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Average ));
         fields.emplace_back( scPersonSalarySum, mcSchemaName, mcDescName, mcSalaryName, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Sum ));
-        stream.addStat( scStatName, fields, vmf::StatUpdateMode::Disabled );
+        stream.addStat( vmf::Stat( scStatName, fields, vmf::StatUpdateMode::Disabled ));
     }
 
     void initStatistics()

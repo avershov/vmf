@@ -214,10 +214,7 @@ int sample(int argc, char *argv[])
     fields.emplace_back( GPS_COUNT_TIME_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_TIME_FIELD, vmf::StatOpFactory::builtinName( vmf::StatOpFactory::BuiltinOp::Count ));
     fields.emplace_back( GPS_STRCAT_COORD_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_COORD_FIELD, StrCatOp::opName() );
     fields.emplace_back( GPS_STRCAT_TIME_NAME, GPS_SCHEMA_NAME, GPS_DESC, GPS_TIME_FIELD, StrCatOp::opName() );
-    mdStream.addStat( GPS_STAT_NAME, fields, vmf::StatUpdateMode::Disabled );
-//    mdStream.addStat( GPS_STAT_NAME, fields, vmf::StatUpdateMode::Manual );
-//    mdStream.addStat( GPS_STAT_NAME, fields, vmf::StatUpdateMode::OnAdd );
-//    mdStream.addStat( GPS_STAT_NAME, fields, vmf::StatUpdateMode::OnTimer );
+    mdStream.addStat( vmf::Stat( GPS_STAT_NAME, fields, vmf::StatUpdateMode::Disabled ));
 
     mdStream.getStat(GPS_STAT_NAME).setUpdateTimeout( 50 );
     mdStream.getStat(GPS_STAT_NAME).setUpdateMode( vmf::StatUpdateMode::OnTimer );
