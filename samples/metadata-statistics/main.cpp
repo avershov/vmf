@@ -186,20 +186,17 @@ int sample(int argc, char *argv[])
         exit(1);
     }
 
-    // Create a GPS metadata field descriptions
-    vector<vmf::FieldDesc> fieldDesc;
-
-    fieldDesc.push_back(vmf::FieldDesc(GPS_COORD_FIELD)); // GPS coordinate as string
-    fieldDesc.push_back(vmf::FieldDesc(GPS_TIME_FIELD)); // Associated time as string
-    
-    // Create GPS metadata description
-    std::shared_ptr<vmf::MetadataDesc> gpsDesc = std::make_shared<vmf::MetadataDesc>(GPS_DESC, fieldDesc);
-
     // Create GPS metadata schema
     std::shared_ptr<vmf::MetadataSchema> gpsSchema = std::make_shared<vmf::MetadataSchema>(GPS_SCHEMA_NAME);
 
     // Add description to the schema
-    gpsSchema->add(gpsDesc);
+    VMF_METADATA_BEGIN( GPS_DESC );
+        VMF_FIELD_STR( GPS_COORD_FIELD );
+        VMF_FIELD_STR( GPS_TIME_FIELD );
+    VMF_METADATA_END( gpsSchema );
+
+    // Get GPS metadata description
+    std::shared_ptr<vmf::MetadataDesc> gpsDesc = gpsSchema->findMetadataDesc( GPS_DESC );
 
     string t = "21.02.2013 18:35";
     cout << "Add metadata schema '" << GPS_SCHEMA_NAME << "'" << endl;

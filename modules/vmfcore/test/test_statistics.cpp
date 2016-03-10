@@ -499,16 +499,24 @@ protected:
 
     void configureSchema( vmf::MetadataStream& stream )
     {
-        scFieldDesc.emplace_back( mcPersonName, vmf::Variant::type_string );
-        scFieldDesc.emplace_back( mcAgeName, vmf::Variant::type_integer );
-        scFieldDesc.emplace_back( mcGrowthName, vmf::Variant::type_integer );
-        scFieldDesc.emplace_back( mcSalaryName, vmf::Variant::type_integer );
-
-        scMetadataDesc = std::make_shared< vmf::MetadataDesc >( mcDescName, scFieldDesc );
         scMetadataSchema = std::make_shared< vmf::MetadataSchema >( mcSchemaName );
 
-        scMetadataSchema->add( scMetadataDesc );
+        VMF_METADATA_BEGIN( mcDescName );
+            VMF_FIELD_STR( mcPersonName );
+            VMF_FIELD_INT( mcAgeName );
+            VMF_FIELD_INT( mcGrowthName );
+            VMF_FIELD_INT( mcSalaryName );
+        VMF_METADATA_END( scMetadataSchema );
+
         stream.addSchema( scMetadataSchema );
+
+        scMetadataDesc = scMetadataSchema->findMetadataDesc( mcDescName );
+
+        vmf::FieldDesc field;
+        scMetadataDesc->getFieldDesc( field, mcPersonName ); scFieldDesc.push_back( field );
+        scMetadataDesc->getFieldDesc( field, mcAgeName    ); scFieldDesc.push_back( field );
+        scMetadataDesc->getFieldDesc( field, mcGrowthName ); scFieldDesc.push_back( field );
+        scMetadataDesc->getFieldDesc( field, mcSalaryName ); scFieldDesc.push_back( field );
     }
 
     void configureStatistics( vmf::MetadataStream& stream )
